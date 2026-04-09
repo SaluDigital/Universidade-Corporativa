@@ -60,7 +60,7 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 const roleColors: Record<UserRole, string> = {
-  admin: 'text-violet-400',
+  admin: 'text-[#9B6FD4]',
   manager: 'text-blue-400',
   employee: 'text-emerald-400',
 };
@@ -91,7 +91,7 @@ export function Sidebar() {
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/5">
         <motion.div
           animate={{ rotate: collapsed ? 0 : 0 }}
-          className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/30"
+          className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6B35B0] to-[#4BC8C8] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#6B35B0]/30"
         >
           <GraduationCap size={20} className="text-white" />
         </motion.div>
@@ -105,7 +105,7 @@ export function Sidebar() {
               className="overflow-hidden"
             >
               <p className="font-bold text-white text-sm leading-tight">SaluDigital</p>
-              <p className="text-violet-400 text-xs font-medium">Universidade</p>
+              <p className="text-[#4BC8C8] text-xs font-medium">Universidade</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -124,7 +124,7 @@ export function Sidebar() {
               className={({ isActive: linkActive }) => cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative',
                 (isActive || linkActive)
-                  ? 'bg-violet-500/15 text-violet-300 border border-violet-500/20'
+                  ? 'bg-[#6B35B0]/15 text-[#C4A8E8] border border-[#6B35B0]/20'
                   : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               )}
             >
@@ -134,11 +134,11 @@ export function Sidebar() {
                   {(isActive || linkActive) && (
                     <motion.div
                       layoutId="activeNav"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-gradient-to-b from-violet-400 to-blue-400 rounded-r-full"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-gradient-to-b from-[#6B35B0] to-[#4BC8C8] rounded-r-full"
                     />
                   )}
 
-                  <span className={cn('flex-shrink-0', (isActive || linkActive) ? 'text-violet-400' : 'text-slate-500 group-hover:text-slate-400')}>
+                  <span className={cn('flex-shrink-0', (isActive || linkActive) ? 'text-[#9B6FD4]' : 'text-slate-500 group-hover:text-slate-400')}>
                     {item.icon}
                   </span>
 

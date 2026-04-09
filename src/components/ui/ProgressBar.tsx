@@ -12,7 +12,7 @@ interface ProgressBarProps {
 }
 
 const colorMap = {
-  default: 'from-violet-500 via-blue-500 to-cyan-500',
+  default: 'from-[#6B35B0] to-[#4BC8C8]',
   emerald: 'from-emerald-500 to-teal-500',
   amber: 'from-amber-500 to-orange-500',
   red: 'from-red-500 to-rose-500',
@@ -59,7 +59,7 @@ interface CircularProgressProps {
   label?: string;
 }
 
-export function CircularProgress({ value, size = 80, strokeWidth = 6, color = '#8b5cf6', label }: CircularProgressProps) {
+export function CircularProgress({ value, size = 80, strokeWidth = 6, color = '#6B35B0', label }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;

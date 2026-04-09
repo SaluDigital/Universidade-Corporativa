@@ -44,7 +44,7 @@ export function Header({ title, subtitle }: HeaderProps) {
             placeholder="Buscar..."
             autoFocus
             onBlur={() => setSearchOpen(false)}
-            className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500/40"
+            className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-slate-600 outline-none focus:border-[#6B35B0]/40"
           />
         )}
         {!searchOpen && (
@@ -57,11 +57,11 @@ export function Header({ title, subtitle }: HeaderProps) {
       {/* Notifications */}
       <button className="relative w-10 h-10 flex items-center justify-center rounded-xl glass hover:bg-white/10 transition-all">
         <Bell size={16} className="text-slate-400" />
-        <span className="absolute top-2 right-2 w-2 h-2 bg-violet-500 rounded-full" />
+        <span className="absolute top-2 right-2 w-2 h-2 bg-[#6B35B0] rounded-full" />
       </button>
 
       {/* AI Badge */}
-      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-semibold">
+      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#6B35B0]/10 border border-[#6B35B0]/20 text-[#9B6FD4] text-xs font-semibold">
         <Zap size={11} />
         SaluDigital LMS
       </div>

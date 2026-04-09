@@ -20,7 +20,7 @@ const container = {
 };
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
-const COLORS = ['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899'];
+const COLORS = ['#6B35B0', '#4BC8C8', '#10b981', '#f59e0b', '#9B6FD4', '#ec4899'];
 
 export function AdminDashboard() {
   const overdueTracks = mockUserTracks.filter(t => t.status === 'overdue');
@@ -31,19 +31,19 @@ export function AdminDashboard() {
       {/* Welcome banner */}
       <motion.div
         variants={item}
-        className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r from-violet-600/20 via-blue-600/10 to-cyan-600/10 border border-violet-500/20"
+        className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r from-[#6B35B0]/20 via-[#4BC8C8]/10 to-[#4BC8C8]/5 border border-[#6B35B0]/20"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#6B35B0]/10 rounded-full blur-3xl" />
         <div className="relative z-10 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Zap size={16} className="text-violet-400" />
-              <span className="text-violet-400 text-sm font-medium">Painel Administrativo</span>
+              <Zap size={16} className="text-[#9B6FD4]" />
+              <span className="text-[#9B6FD4] text-sm font-medium">Painel Administrativo</span>
             </div>
             <h2 className="text-2xl font-bold text-white mb-1">Visão Geral do Sistema</h2>
             <p className="text-slate-400 text-sm">Acompanhe o desempenho da sua universidade corporativa em tempo real.</p>
           </div>
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/15 border border-violet-500/25 text-violet-300 text-sm font-medium">
+          <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6B35B0]/15 border border-[#6B35B0]/25 text-[#C4A8E8] text-sm font-medium">
             <Activity size={14} />
             Sistema operacional
           </div>
@@ -67,30 +67,30 @@ export function AdminDashboard() {
               <p className="text-slate-500 text-sm">Conclusões e certificados emitidos</p>
             </div>
             <div className="flex items-center gap-4 text-xs text-slate-500">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 bg-violet-500 rounded-full inline-block" />Conclusões</span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 bg-cyan-500 rounded-full inline-block" />Certificados</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#6B35B0' }} />Conclusões</span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full inline-block" style={{ background: '#4BC8C8' }} />Certificados</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={monthlyProgress}>
               <defs>
                 <linearGradient id="gComp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#6B35B0" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6B35B0" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gCert" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#4BC8C8" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#4BC8C8" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{ background: '#12122b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#e2e8f0', fontSize: '12px' }}
-                cursor={{ stroke: 'rgba(139,92,246,0.2)', strokeWidth: 1 }}
+                cursor={{ stroke: 'rgba(107,53,176,0.2)', strokeWidth: 1 }}
               />
-              <Area type="monotone" dataKey="completions" stroke="#8b5cf6" fill="url(#gComp)" strokeWidth={2} dot={false} name="Conclusões" />
-              <Area type="monotone" dataKey="certificates" stroke="#06b6d4" fill="url(#gCert)" strokeWidth={2} dot={false} name="Certificados" />
+              <Area type="monotone" dataKey="completions" stroke="#6B35B0" fill="url(#gComp)" strokeWidth={2} dot={false} name="Conclusões" />
+              <Area type="monotone" dataKey="certificates" stroke="#4BC8C8" fill="url(#gCert)" strokeWidth={2} dot={false} name="Certificados" />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
@@ -246,7 +246,7 @@ export function AdminDashboard() {
                   ${event.color === 'emerald' ? 'bg-emerald-500/15 text-emerald-400' :
                     event.color === 'blue' ? 'bg-blue-500/15 text-blue-400' :
                     event.color === 'amber' ? 'bg-amber-500/15 text-amber-400' :
-                    'bg-violet-500/15 text-violet-400'}`}
+                    'bg-[#6B35B0]/15 text-[#9B6FD4]'}`}
                 >
                   {event.icon}
                 </div>

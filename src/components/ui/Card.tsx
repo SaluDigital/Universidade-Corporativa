@@ -22,9 +22,9 @@ export function Card({ children, className, hover, glow, onClick, gradient, padd
       className={cn(
         'glass-card rounded-2xl',
         paddings[padding],
-        hover && 'cursor-pointer transition-all duration-300 hover:border-violet-500/25 hover:shadow-2xl hover:shadow-violet-500/10',
+        hover && 'cursor-pointer transition-all duration-300 hover:border-[#6B35B0]/25 hover:shadow-2xl hover:shadow-[#6B35B0]/10',
         glow && 'glow-sm',
-        gradient && 'border-0 bg-gradient-to-br from-violet-500/10 to-blue-500/10',
+        gradient && 'border-0 bg-gradient-to-br from-[#6B35B0]/10 to-[#4BC8C8]/10',
         className
       )}
     >
