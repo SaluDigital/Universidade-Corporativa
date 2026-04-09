@@ -63,7 +63,7 @@ export function Header({ title, subtitle }: HeaderProps) {
       {/* AI Badge */}
       <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-semibold">
         <Zap size={11} />
-        SuperDental LMS
+        SaluDigital LMS
       </div>
 
       {/* Avatar */}

@@ -104,7 +104,7 @@ export function Sidebar() {
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <p className="font-bold text-white text-sm leading-tight">SuperDental</p>
+              <p className="font-bold text-white text-sm leading-tight">SaluDigital</p>
               <p className="text-violet-400 text-xs font-medium">Universidade</p>
             </motion.div>
           )}

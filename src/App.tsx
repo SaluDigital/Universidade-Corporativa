@@ -69,7 +69,7 @@ const pageTitles: Record<string, { title: string; subtitle?: string }> = {
 };
 
 function LayoutWithTitle({ path }: { path: string }) {
-  const info = pageTitles[path] ?? { title: 'SuperDental LMS' };
+  const info = pageTitles[path] ?? { title: 'SaluDigital LMS' };
   return <Layout title={info.title} subtitle={info.subtitle} />;
 }
 

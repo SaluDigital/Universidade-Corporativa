@@ -16,7 +16,7 @@ export function MyTrackPage() {
     <div className="max-w-4xl space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-white">Minha Trilha</h2>
-        <p className="text-slate-500 text-sm mt-1">Seu caminho de desenvolvimento na SuperDental</p>
+        <p className="text-slate-500 text-sm mt-1">Seu caminho de desenvolvimento na SaluDigital</p>
       </div>
 
       {userTracks.length === 0 ? (

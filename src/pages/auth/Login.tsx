@@ -58,9 +58,9 @@ export function Login() {
       <div className="hidden lg:flex w-[55%] relative flex-col items-center justify-center p-16">
         {/* Animated background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#070711] via-[#0d0d25] to-[#070711]">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-600/15 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-3/4 left-1/3 w-48 h-48 bg-cyan-600/10 rounded-full blur-[60px] animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#6B35B0]/20 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-[#4BC8C8]/15 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-3/4 left-1/3 w-48 h-48 bg-[#4BC8C8]/10 rounded-full blur-[60px] animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
         {/* Floating cards decoration */}
@@ -113,7 +113,7 @@ export function Login() {
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', damping: 15, delay: 0.2 }}
-            className="w-24 h-24 bg-gradient-to-br from-violet-600 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-violet-500/40"
+            className="w-24 h-24 bg-gradient-to-br from-[#6B35B0] to-[#4BC8C8] rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-[#6B35B0]/40"
           >
             <GraduationCap size={44} className="text-white" />
           </motion.div>
@@ -134,7 +134,7 @@ export function Login() {
             transition={{ delay: 0.4 }}
             className="text-slate-400 text-lg leading-relaxed"
           >
-            A plataforma de aprendizagem que transforma colaboradores em protagonistas do crescimento SuperDental.
+            A plataforma de aprendizagem que transforma colaboradores em protagonistas do crescimento SaluDigital.
           </motion.p>
 
           {/* Stats */}
@@ -179,11 +179,11 @@ export function Login() {
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#6B35B0] to-[#4BC8C8] rounded-xl flex items-center justify-center">
               <GraduationCap size={20} className="text-white" />
             </div>
             <div>
-              <p className="font-bold text-white">SuperDental</p>
+              <p className="font-bold text-white">SaluDigital</p>
               <p className="text-violet-400 text-xs">Universidade Corporativa</p>
             </div>
           </div>
@@ -235,7 +235,7 @@ export function Login() {
               type="submit"
               disabled={loading}
               whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold transition-all shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 disabled:opacity-60 mt-2"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#6B35B0] to-[#4BC8C8] hover:from-[#7D45C5] hover:to-[#5DDADA] text-white font-semibold transition-all shadow-lg shadow-[#6B35B0]/25 hover:shadow-[#6B35B0]/40 disabled:opacity-60 mt-2"
             >
               {loading ? (
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -282,7 +282,7 @@ export function Login() {
           </div>
 
           <p className="text-center text-slate-600 text-xs mt-6">
-            Universidade Corporativa SuperDental © 2024
+            Universidade Corporativa SaluDigital © 2026
           </p>
         </motion.div>
       </div>

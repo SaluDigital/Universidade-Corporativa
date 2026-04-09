@@ -65,7 +65,7 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #a78bfa, #60a5fa, #22d3ee);
+    background: linear-gradient(135deg, #9B6FD4, #4BC8C8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -79,23 +79,23 @@
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4);
+    background: linear-gradient(135deg, #6B35B0, #4BC8C8);
   }
 
   .gradient-bg-soft {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+    background: linear-gradient(135deg, rgba(107, 53, 176, 0.15), rgba(75, 200, 200, 0.15));
   }
 
   .glow-purple {
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.2), 0 0 80px rgba(139, 92, 246, 0.05);
+    box-shadow: 0 0 40px rgba(107, 53, 176, 0.2), 0 0 80px rgba(107, 53, 176, 0.05);
   }
 
   .glow-blue {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 40px rgba(75, 200, 200, 0.2);
   }
 
   .glow-sm {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 20px rgba(107, 53, 176, 0.15);
   }
 
   .border-gradient {
