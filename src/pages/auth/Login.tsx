@@ -30,16 +30,21 @@ export function Login() {
     e.preventDefault();
     if (!email || !password) return;
     setLoading(true);
-    const ok = await login(email, password);
-    setLoading(false);
-    if (ok) {
-      const { user } = useAuthStore.getState();
-      toast.success(`Bem-vindo(a), ${user?.name.split(' ')[0]}!`);
-      if (user?.role === 'admin') navigate('/admin');
-      else if (user?.role === 'manager') navigate('/manager');
-      else navigate('/employee');
-    } else {
-      toast.error('E-mail ou senha incorretos.');
+    try {
+      const ok = await login(email, password);
+      if (ok) {
+        const { user } = useAuthStore.getState();
+        toast.success(`Bem-vindo(a), ${user?.name?.split(' ')[0] ?? ''}!`);
+        if (user?.role === 'admin') navigate('/admin');
+        else if (user?.role === 'manager') navigate('/manager');
+        else navigate('/employee');
+      } else {
+        toast.error('E-mail ou senha incorretos.');
+      }
+    } catch {
+      toast.error('Erro ao fazer login. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 

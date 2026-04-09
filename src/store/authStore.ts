@@ -52,20 +52,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error || !data.session) return false;
+      if (error || !data.session) return false;
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*, department:departments(*), position:positions(*)')
-      .eq('id', data.session.user.id)
-      .single();
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('*, department:departments(*), position:positions(*)')
+        .eq('id', data.session.user.id)
+        .single();
 
-    if (!profile) return false;
+      if (profileError || !profile) return false;
 
-    set({ user: profile as User, isAuthenticated: true });
-    return true;
+      set({ user: profile as User, isAuthenticated: true });
+      return true;
+    } catch {
+      return false;
+    }
   },
 
   logout: async () => {
