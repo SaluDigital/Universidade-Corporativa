@@ -1,15 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
-
-const demoAccounts = [
-  { label: 'Admin', email: 'admin@superdental.com.br', color: 'violet', desc: 'Acesso total ao sistema' },
-  { label: 'Gestor', email: 'carlos.mendes@superdental.com.br', color: 'blue', desc: 'Gerenciamento de equipe' },
-  { label: 'Colaborador', email: 'ana.lima@superdental.com.br', color: 'emerald', desc: 'Trilhas e cursos' },
-];
 
 export function Login() {
   const navigate = useNavigate();
@@ -21,27 +15,9 @@ export function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !password) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
-    const ok = await login(email, password || 'demo');
-    setLoading(false);
-    if (ok) {
-      const { user } = useAuthStore.getState();
-      toast.success(`Bem-vindo(a) de volta, ${user?.name.split(' ')[0]}!`);
-      if (user?.role === 'admin') navigate('/admin');
-      else if (user?.role === 'manager') navigate('/manager');
-      else navigate('/employee');
-    } else {
-      toast.error('Usuário não encontrado. Use uma conta demo.');
-    }
-  };
-
-  const quickLogin = async (demoEmail: string) => {
-    setEmail(demoEmail);
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
-    const ok = await login(demoEmail, 'demo');
+    const ok = await login(email, password);
     setLoading(false);
     if (ok) {
       const { user } = useAuthStore.getState();
@@ -49,6 +25,8 @@ export function Login() {
       if (user?.role === 'admin') navigate('/admin');
       else if (user?.role === 'manager') navigate('/manager');
       else navigate('/employee');
+    } else {
+      toast.error('E-mail ou senha incorretos.');
     }
   };
 
@@ -203,7 +181,7 @@ export function Login() {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="seu@superdental.com.br"
+                  placeholder="seu@saludigital.com.br"
                   className="input-base pl-10"
                   required
                 />
@@ -220,6 +198,7 @@ export function Login() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="input-base pl-10 pr-10"
+                  required
                 />
                 <button
                   type="button"
@@ -246,40 +225,6 @@ export function Login() {
               )}
             </motion.button>
           </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-white/5" />
-            <span className="text-slate-600 text-xs">Acesso rápido para demonstração</span>
-            <div className="flex-1 h-px bg-white/5" />
-          </div>
-
-          {/* Demo accounts */}
-          <div className="space-y-2">
-            {demoAccounts.map((acc) => (
-              <motion.button
-                key={acc.email}
-                onClick={() => quickLogin(acc.email)}
-                disabled={loading}
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center gap-4 p-3.5 rounded-xl glass border border-white/5 hover:border-violet-500/20 hover:bg-violet-500/5 transition-all group text-left"
-              >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold
-                  ${acc.color === 'violet' ? 'bg-violet-500/20 text-violet-400' :
-                    acc.color === 'blue' ? 'bg-blue-500/20 text-blue-400' :
-                    'bg-emerald-500/20 text-emerald-400'}`}
-                >
-                  {acc.label[0]}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">{acc.label}</p>
-                  <p className="text-xs text-slate-500">{acc.desc}</p>
-                </div>
-                <ArrowRight size={14} className="text-slate-600 group-hover:text-violet-400 transition-colors" />
-              </motion.button>
-            ))}
-          </div>
 
           <p className="text-center text-slate-600 text-xs mt-6">
             Universidade Corporativa SaluDigital © 2026
