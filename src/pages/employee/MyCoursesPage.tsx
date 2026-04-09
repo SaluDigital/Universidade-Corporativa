@@ -84,7 +84,7 @@ export function MyCoursesPage() {
                   </div>
                   <ProgressBar value={course.progress?.progress_percent ?? 0} size="sm" showLabel />
                 </div>
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#6B35B0]/15 border border-[#6B35B0]/20 text-xs font-medium text-[#9B6FD4] group-hover:bg-[#6B35B0]/25 transition-all">
+                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#6B35B0]/15 border border-[#6B35B0]/20 text-xs font-medium text-white group-hover:bg-[#6B35B0]/25 transition-all">
                   <PlayCircle size={13} /> Continuar
                 </button>
               </motion.div>

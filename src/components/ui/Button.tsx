@@ -22,8 +22,8 @@ export function Button({
   const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden';
 
   const variants = {
-    primary: 'bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-500 hover:to-violet-600 text-white shadow-lg hover:shadow-violet-500/30 hover:-translate-y-0.5',
-    secondary: 'glass border border-white/10 text-slate-300 hover:text-white hover:border-violet-500/40 hover:bg-violet-500/10',
+    primary: 'bg-gradient-to-r from-[#6B35B0] to-[#4BC8C8] hover:from-[#7B45C0] hover:to-[#5BD8D8] text-white shadow-lg hover:shadow-[#6B35B0]/30 hover:-translate-y-0.5',
+    secondary: 'glass border border-white/10 text-slate-300 hover:text-white hover:border-[#6B35B0]/40 hover:bg-[#6B35B0]/10',
     ghost: 'text-slate-400 hover:text-white hover:bg-white/5',
     danger: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white shadow-lg hover:shadow-red-500/30 hover:-translate-y-0.5',
     success: 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-0.5',

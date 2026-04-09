@@ -70,7 +70,7 @@ export function ManagerDashboard() {
             </div>
             <button
               onClick={() => navigate('/manager/team')}
-              className="flex items-center gap-1.5 text-xs text-[#9B6FD4] hover:text-[#C4A8E8] transition-colors"
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
             >
               Ver todos <ArrowRight size={12} />
             </button>
@@ -143,7 +143,7 @@ export function ManagerDashboard() {
                     <p className="text-sm font-medium text-white">{member?.name}</p>
                     <p className="text-xs text-red-400">{track.progress_percent}% concluído · Vencida</p>
                   </div>
-                  <button className="text-xs text-[#9B6FD4] hover:text-[#C4A8E8] bg-[#6B35B0]/10 border border-[#6B35B0]/20 px-2 py-1 rounded-lg transition-all">
+                  <button className="text-xs text-white bg-[#6B35B0]/20 border border-[#6B35B0]/30 hover:bg-[#6B35B0]/35 px-2 py-1 rounded-lg transition-all">
                     Cobrar
                   </button>
                 </div>

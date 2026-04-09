@@ -61,7 +61,7 @@ export function Header({ title, subtitle }: HeaderProps) {
       </button>
 
       {/* AI Badge */}
-      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#6B35B0]/10 border border-[#6B35B0]/20 text-[#9B6FD4] text-xs font-semibold">
+      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#6B35B0]/10 border border-[#6B35B0]/20 text-white text-xs font-semibold">
         <Zap size={11} />
         SaluDigital LMS
       </div>
