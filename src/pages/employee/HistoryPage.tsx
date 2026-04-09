@@ -49,9 +49,9 @@ export function HistoryPage() {
 
   const colorMap: Record<string, string> = {
     emerald: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-    blue: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+    blue: 'bg-[#4BC8C8]/15 text-[#4BC8C8] border-[#4BC8C8]/20',
     amber: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
-    violet: 'bg-violet-500/15 text-violet-400 border-violet-500/20',
+    violet: 'bg-[#6B35B0]/15 text-[#9B6FD4] border-[#6B35B0]/20',
   };
 
   return (
@@ -71,8 +71,8 @@ export function HistoryPage() {
           <p className="text-2xl font-bold text-amber-400">{myCerts.length}</p>
           <p className="text-xs text-slate-500 mt-1">Certificados</p>
         </div>
-        <div className="glass-card rounded-xl p-4 text-center border border-violet-500/15">
-          <p className="text-2xl font-bold text-violet-400">{myTracks.filter(t => t.status === 'completed').length}</p>
+        <div className="glass-card rounded-xl p-4 text-center border border-[#6B35B0]/15">
+          <p className="text-2xl font-bold text-[#9B6FD4]">{myTracks.filter(t => t.status === 'completed').length}</p>
           <p className="text-xs text-slate-500 mt-1">Trilhas completas</p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export function HistoryPage() {
           </div>
         ) : (
           <div className="relative space-y-4">
-            <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-violet-500/30 to-transparent" />
+            <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-[#6B35B0]/30 to-transparent" />
             {timeline.map((event, i) => (
               <motion.div
                 key={i}
@@ -140,7 +140,7 @@ export function HistoryPage() {
                 >
                   <td className="px-4 py-3 text-sm text-white max-w-xs"><span className="truncate block">{cp.course?.title}</span></td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${cp.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' : cp.status === 'in_progress' ? 'bg-blue-500/15 text-blue-400' : 'bg-slate-500/15 text-slate-400'}`}>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${cp.status === 'completed' ? 'bg-emerald-500/15 text-emerald-400' : cp.status === 'in_progress' ? 'bg-[#4BC8C8]/15 text-[#4BC8C8]' : 'bg-slate-500/15 text-slate-400'}`}>
                       {cp.status === 'completed' ? 'Concluído' : cp.status === 'in_progress' ? 'Em andamento' : 'Não iniciado'}
                     </span>
                   </td>

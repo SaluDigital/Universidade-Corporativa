@@ -26,7 +26,7 @@ export function MyCertificatesPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      {showConfetti && <Confetti recycle={false} numberOfPieces={200} colors={['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b']} />}
+      {showConfetti && <Confetti recycle={false} numberOfPieces={200} colors={['#6B35B0', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b']} />}
 
       <div>
         <h2 className="text-2xl font-bold text-white">Meus Certificados</h2>
@@ -103,7 +103,7 @@ export function MyCertificatesPage() {
                   </button>
                   <button
                     onClick={() => toast.success('Link copiado!')}
-                    className="p-2.5 rounded-xl glass border border-white/10 text-slate-500 hover:text-white hover:border-violet-500/20 transition-all"
+                    className="p-2.5 rounded-xl glass border border-white/10 text-slate-500 hover:text-white hover:border-[#6B35B0]/20 transition-all"
                   >
                     <Share2 size={13} />
                   </button>

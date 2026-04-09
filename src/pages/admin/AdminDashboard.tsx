@@ -233,7 +233,7 @@ export function AdminDashboard() {
               { user: 'Ana Paula Lima', action: 'concluiu CRM e Funil', time: '2h atrás', icon: '✓', color: 'emerald' },
               { user: 'Pedro Souza', action: 'iniciou Atendimento e Conversão', time: '4h atrás', icon: '▶', color: 'blue' },
               { user: 'Fernanda Costa', action: 'obteve certificado Onboarding', time: '1d atrás', icon: '🏆', color: 'amber' },
-              { user: 'Rafael Torres', action: 'foi matriculado em trilha', time: '2d atrás', icon: '+', color: 'violet' },
+              { user: 'Rafael Torres', action: 'foi matriculado em trilha', time: '2d atrás', icon: '+', color: 'purple' },
             ].map((event, i) => (
               <motion.div
                 key={i}

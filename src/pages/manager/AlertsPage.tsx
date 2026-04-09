@@ -73,7 +73,7 @@ export function AlertsPage() {
                   ) : (
                     <button
                       onClick={() => sendNotification(item.user_id, item.user?.name ?? '')}
-                      className="flex items-center gap-1.5 text-xs text-violet-400 bg-violet-500/10 border border-violet-500/20 hover:bg-violet-500/20 px-3 py-2 rounded-xl transition-all"
+                      className="flex items-center gap-1.5 text-xs text-[#9B6FD4] bg-[#6B35B0]/10 border border-[#6B35B0]/20 hover:bg-[#6B35B0]/20 px-3 py-2 rounded-xl transition-all"
                     >
                       <Send size={12} /> Cobrar
                     </button>

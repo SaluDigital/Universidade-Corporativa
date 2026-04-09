@@ -107,13 +107,13 @@ export function LessonPage() {
                           onClick={() => { setCurrentLesson(lesson); setQuizAnswer(null); setQuizSubmitted(false); }}
                           className={`w-full flex items-start gap-2.5 p-2.5 rounded-xl text-left transition-all ${
                             currentLesson?.id === lesson.id
-                              ? 'bg-violet-500/15 border border-violet-500/20 text-violet-300'
+                              ? 'bg-[#6B35B0]/15 border border-[#6B35B0]/20 text-[#C4A8E8]'
                               : lesson.completed
                               ? 'text-emerald-400/70 hover:bg-white/3'
                               : 'text-slate-500 hover:text-slate-300 hover:bg-white/3'
                           }`}
                         >
-                          <span className={`mt-0.5 flex-shrink-0 ${currentLesson?.id === lesson.id ? 'text-violet-400' : lesson.completed ? 'text-emerald-400' : 'text-slate-600'}`}>
+                          <span className={`mt-0.5 flex-shrink-0 ${currentLesson?.id === lesson.id ? 'text-[#9B6FD4]' : lesson.completed ? 'text-emerald-400' : 'text-slate-600'}`}>
                             {lesson.completed ? <CheckCircle size={13} /> : typeIcon[lesson.type]}
                           </span>
                           <div className="flex-1 min-w-0">
@@ -163,7 +163,7 @@ export function LessonPage() {
                   </motion.div>
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full w-1/3 bg-violet-500 rounded-full" />
+                      <div className="h-full w-1/3 bg-[#6B35B0] rounded-full" />
                     </div>
                     <div className="flex justify-between text-xs text-white/40 mt-1">
                       <span>3:24</span>
@@ -202,7 +202,7 @@ export function LessonPage() {
             {currentLesson?.type === 'quiz' && (
               <motion.div key={currentLesson.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div className="flex items-center gap-2 mb-6">
-                  <HelpCircle size={20} className="text-violet-400" />
+                  <HelpCircle size={20} className="text-[#9B6FD4]" />
                   <h2 className="text-xl font-bold text-white">Avaliação do Módulo</h2>
                 </div>
                 <div className="glass-card rounded-2xl p-6">
@@ -221,10 +221,10 @@ export function LessonPage() {
                           ${quizAnswer === opt
                             ? quizSubmitted
                               ? i === 1 ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300' : 'bg-red-500/15 border-red-500/30 text-red-300'
-                              : 'bg-violet-500/15 border-violet-500/30 text-violet-300'
+                              : 'bg-[#6B35B0]/15 border-[#6B35B0]/30 text-[#C4A8E8]'
                             : quizSubmitted && i === 1
                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                            : 'text-slate-400 border-white/8 hover:border-violet-500/20 hover:text-white'}`}
+                            : 'text-slate-400 border-white/8 hover:border-[#6B35B0]/20 hover:text-white'}`}
                       >
                         <span className="font-semibold mr-2">{String.fromCharCode(65 + i)}.</span>
                         {opt}
@@ -254,7 +254,7 @@ export function LessonPage() {
               <motion.div key={currentLesson.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <h2 className="text-xl font-bold text-white mb-4">{currentLesson.title}</h2>
                 <div className="glass-card rounded-2xl p-6 flex flex-col items-center py-12">
-                  <BookOpen size={48} className="text-violet-400 mb-4" />
+                  <BookOpen size={48} className="text-[#9B6FD4] mb-4" />
                   <p className="text-white font-medium mb-2">Material Complementar em PDF</p>
                   <p className="text-slate-500 text-sm mb-4">Manual de Integração SuperDental - v2.0</p>
                   <Button icon={<BookOpen size={15} />}>Abrir documento</Button>
@@ -267,7 +267,7 @@ export function LessonPage() {
               <button
                 onClick={() => currentIdx > 0 && setCurrentLesson(allLessons[currentIdx - 1])}
                 disabled={currentIdx === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-white/8 text-sm text-slate-400 hover:text-white hover:border-violet-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-white/8 text-sm text-slate-400 hover:text-white hover:border-[#6B35B0]/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft size={15} /> Anterior
               </button>

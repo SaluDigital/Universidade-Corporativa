@@ -34,7 +34,7 @@ const radarData = [
   { subject: 'Cultura', A: 88, fullMark: 100 },
 ];
 
-const COLORS = ['#8b5cf6', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'];
+const COLORS = ['#6B35B0', '#4BC8C8', '#10b981', '#f59e0b', '#9B6FD4'];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -84,8 +84,8 @@ export function ReportsPage() {
               <XAxis dataKey="month" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="certificates" stroke="#8b5cf6" strokeWidth={2.5} dot={{ r: 4, fill: '#8b5cf6', strokeWidth: 0 }} name="Certificados" />
-              <Line type="monotone" dataKey="completions" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }} strokeDasharray="4 2" name="Conclusões" />
+              <Line type="monotone" dataKey="certificates" stroke="#6B35B0" strokeWidth={2.5} dot={{ r: 4, fill: '#6B35B0', strokeWidth: 0 }} name="Certificados" />
+              <Line type="monotone" dataKey="completions" stroke="#4BC8C8" strokeWidth={2} dot={{ r: 3, fill: '#4BC8C8', strokeWidth: 0 }} strokeDasharray="4 2" name="Conclusões" />
             </LineChart>
           </ResponsiveContainer>
         </motion.div>
@@ -97,7 +97,7 @@ export function ReportsPage() {
             <RadarChart data={radarData}>
               <PolarGrid stroke="rgba(255,255,255,0.05)" />
               <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 11 }} />
-              <Radar dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2} />
+              <Radar dataKey="A" stroke="#6B35B0" fill="#6B35B0" fillOpacity={0.2} strokeWidth={2} />
             </RadarChart>
           </ResponsiveContainer>
         </motion.div>

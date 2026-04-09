@@ -48,7 +48,7 @@ export function TeamPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
               onClick={() => setSelectedMember(member)}
-              className={`glass-card rounded-2xl p-5 cursor-pointer hover:border-violet-500/25 transition-all group
+              className={`glass-card rounded-2xl p-5 cursor-pointer hover:border-[#6B35B0]/25 transition-all group
                 ${hasOverdue ? 'border border-red-500/20 bg-red-500/3' : ''}`}
             >
               <div className="flex items-start justify-between mb-4">
@@ -59,7 +59,7 @@ export function TeamPage() {
                     <p className="text-xs text-slate-500">{getPos(member.position_id)}</p>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-slate-600 group-hover:text-violet-400 transition-colors mt-1" />
+                <ChevronRight size={16} className="text-slate-600 group-hover:text-[#9B6FD4] transition-colors mt-1" />
               </div>
 
               {hasOverdue && (
@@ -132,7 +132,7 @@ export function TeamPage() {
               <div className="space-y-2">
                 {getMemberTracks(selectedMember.id).map(track => (
                   <div key={track.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/3 border border-white/5">
-                    <GitBranch size={14} className="text-violet-400 flex-shrink-0" />
+                    <GitBranch size={14} className="text-[#9B6FD4] flex-shrink-0" />
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
                         <span className="text-sm text-white">Trilha {track.track_id}</span>

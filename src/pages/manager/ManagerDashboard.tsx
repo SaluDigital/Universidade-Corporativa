@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+const COLORS = ['#10b981', '#4BC8C8', '#f59e0b', '#ef4444'];
 
 export function ManagerDashboard() {
   const { user } = useAuthStore();
@@ -38,10 +38,10 @@ export function ManagerDashboard() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="max-w-screen-xl space-y-6">
       {/* Welcome */}
-      <motion.div variants={item} className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r from-blue-600/20 via-cyan-600/10 to-teal-600/10 border border-blue-500/20">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+      <motion.div variants={item} className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r from-[#6B35B0]/20 via-[#4BC8C8]/10 to-teal-600/10 border border-[#6B35B0]/20">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#6B35B0]/10 rounded-full blur-3xl" />
         <div className="relative z-10">
-          <p className="text-blue-400 text-sm font-medium mb-1">Painel do Gestor</p>
+          <p className="text-[#9B6FD4] text-sm font-medium mb-1">Painel do Gestor</p>
           <h2 className="text-2xl font-bold text-white mb-1">Olá, {user?.name.split(' ')[0]}!</h2>
           <p className="text-slate-400 text-sm">
             Você tem <span className="text-white font-semibold">{team.length} colaboradores</span> na sua equipe.
@@ -70,7 +70,7 @@ export function ManagerDashboard() {
             </div>
             <button
               onClick={() => navigate('/manager/team')}
-              className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-[#9B6FD4] hover:text-[#C4A8E8] transition-colors"
             >
               Ver todos <ArrowRight size={12} />
             </button>
@@ -143,7 +143,7 @@ export function ManagerDashboard() {
                     <p className="text-sm font-medium text-white">{member?.name}</p>
                     <p className="text-xs text-red-400">{track.progress_percent}% concluído · Vencida</p>
                   </div>
-                  <button className="text-xs text-violet-400 hover:text-violet-300 bg-violet-500/10 border border-violet-500/20 px-2 py-1 rounded-lg transition-all">
+                  <button className="text-xs text-[#9B6FD4] hover:text-[#C4A8E8] bg-[#6B35B0]/10 border border-[#6B35B0]/20 px-2 py-1 rounded-lg transition-all">
                     Cobrar
                   </button>
                 </div>
