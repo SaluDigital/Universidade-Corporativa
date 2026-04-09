@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
+import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { supabase } from '../../lib/supabase';
-import toast from 'react-hot-toast';
 
 export function Login() {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [stats, setStats] = useState({ courses: 0, tracks: 0, certificates: 0 });
 
   useEffect(() => {
@@ -29,20 +30,20 @@ export function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
+    setErrorMsg('');
     setLoading(true);
     try {
       const ok = await login(email, password);
       if (ok) {
         const { user } = useAuthStore.getState();
-        toast.success(`Bem-vindo(a), ${user?.name?.split(' ')[0] ?? ''}!`);
         if (user?.role === 'admin') navigate('/admin');
         else if (user?.role === 'manager') navigate('/manager');
         else navigate('/employee');
       } else {
-        toast.error('E-mail ou senha incorretos.');
+        setErrorMsg('E-mail ou senha incorretos.');
       }
     } catch {
-      toast.error('Erro ao fazer login. Tente novamente.');
+      setErrorMsg('Erro ao conectar. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -50,6 +51,7 @@ export function Login() {
 
   return (
     <div className="min-h-screen flex overflow-hidden">
+      <Toaster position="top-center" toastOptions={{ style: { background: '#1e1e3a', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.08)' } }} />
       {/* Left panel */}
       <div className="hidden lg:flex w-[55%] relative flex-col items-center justify-center p-16">
         {/* Animated background */}
@@ -227,6 +229,13 @@ export function Login() {
                 </button>
               </div>
             </div>
+
+            {errorMsg && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                <AlertCircle size={15} className="flex-shrink-0" />
+                {errorMsg}
+              </div>
+            )}
 
             <motion.button
               type="submit"
