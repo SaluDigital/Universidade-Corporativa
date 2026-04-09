@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 export function Login() {
@@ -12,6 +13,18 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({ courses: 0, tracks: 0, certificates: 0 });
+
+  useEffect(() => {
+    (async () => {
+      const [{ count: courses }, { count: tracks }, { count: certificates }] = await Promise.all([
+        supabase.from('courses').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('tracks').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('certificates').select('*', { count: 'exact', head: true }),
+      ]);
+      setStats({ courses: courses ?? 0, tracks: tracks ?? 0, certificates: certificates ?? 0 });
+    })();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +125,7 @@ export function Login() {
             transition={{ delay: 0.4 }}
             className="text-slate-400 text-lg leading-relaxed"
           >
-            A plataforma de aprendizagem que transforma colaboradores em protagonistas do crescimento SaluDigital.
+            A plataforma de aprendizagem que transforma colaboradores em protagonistas do crescimento.
           </motion.p>
 
           {/* Stats */}
@@ -123,9 +136,9 @@ export function Login() {
             className="flex justify-center gap-8 mt-10"
           >
             {[
-              { value: '8', label: 'Cursos' },
-              { value: '4', label: 'Trilhas' },
-              { value: '3', label: 'Certificados' },
+              { value: stats.courses, label: 'Cursos' },
+              { value: stats.tracks, label: 'Trilhas' },
+              { value: stats.certificates, label: 'Certificados' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-2xl font-bold text-white">{stat.value}</p>
