@@ -178,3 +178,31 @@ export const getCompletionByDepartment = () =>
 
 export const getOverdueTracks = () =>
   supabase.from('v_overdue_tracks').select('*');
+
+// ─── MONTHLY COMPLETIONS ──────────────────────────────────
+export const getMonthlyCompletions = () =>
+  supabase
+    .from('user_course_progress')
+    .select('completed_at')
+    .eq('status', 'completed')
+    .not('completed_at', 'is', null);
+
+export const getMonthlyCertificates = () =>
+  supabase
+    .from('certificates')
+    .select('issued_at');
+
+// ─── TOP COURSES ──────────────────────────────────────────
+export const getTopCourses = () =>
+  supabase
+    .from('user_course_progress')
+    .select('course_id, courses(title)')
+    .eq('status', 'completed');
+
+// ─── RECENT AUDIT LOGS ────────────────────────────────────
+export const getRecentActivity = () =>
+  supabase
+    .from('audit_logs')
+    .select('*, user:users(id,name,email)')
+    .order('created_at', { ascending: false })
+    .limit(5);
