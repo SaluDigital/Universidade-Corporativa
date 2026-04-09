@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 
 // ─── USERS ────────────────────────────────────────────────
 export const getUsers = () =>
@@ -20,7 +20,7 @@ export const updateUser = (id: string, data: Record<string, unknown>) =>
 export const updateUserStatus = (id: string, status: 'active' | 'inactive') =>
   supabase.from('users').update({ status }).eq('id', id);
 
-/** Cria auth user + perfil na tabela users, preservando a sessão do admin */
+/** Cria auth user + perfil na tabela users via Admin API (não afeta a sessão do admin) */
 export const createUser = async (params: {
   name: string;
   email: string;
@@ -30,23 +30,16 @@ export const createUser = async (params: {
   position_id: string;
   hire_date: string;
 }) => {
-  // Salva sessão atual do admin antes do signUp
-  const { data: { session: adminSession } } = await supabase.auth.getSession();
+  if (!supabaseAdmin) throw new Error('VITE_SUPABASE_SERVICE_KEY não configurada no .env');
 
-  const { data, error } = await supabase.auth.signUp({
+  // Usa Admin API — não faz login automático, não afeta a sessão atual
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email: params.email,
     password: params.password,
+    email_confirm: true, // confirma o e-mail automaticamente, sem enviar e-mail
   });
   if (error) throw error;
   if (!data.user) throw new Error('Usuário não criado');
-
-  // Restaura sessão do admin imediatamente (signUp faz auto-login do novo usuário)
-  if (adminSession) {
-    await supabase.auth.setSession({
-      access_token: adminSession.access_token,
-      refresh_token: adminSession.refresh_token,
-    });
-  }
 
   const { error: profileError } = await supabase.from('users').insert({
     id: data.user.id,
