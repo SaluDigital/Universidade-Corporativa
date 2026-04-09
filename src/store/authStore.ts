@@ -1,43 +1,80 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { User, UserRole } from '../types';
-import { mockUsers } from '../data/mock';
+import { supabase } from '../lib/supabase';
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setUser: (user: User) => void;
+  init: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isAuthenticated: false,
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  loading: true,
 
-      login: async (email: string, _password: string) => {
-        // Demo: find user by email in mock data
-        const found = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-        if (found) {
-          set({ user: found, isAuthenticated: true });
-          return true;
-        }
-        return false;
-      },
+  init: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
 
-      logout: () => {
-        set({ user: null, isAuthenticated: false });
-      },
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*, department:departments(*), position:positions(*)')
+        .eq('id', session.user.id)
+        .single();
 
-      setUser: (user: User) => set({ user }),
-    }),
-    {
-      name: 'superdental-auth',
+      if (profile) {
+        set({ user: profile as User, isAuthenticated: true, loading: false });
+        return;
+      }
     }
-  )
-);
+
+    set({ loading: false });
+
+    // Ouvir mudanças de sessão (login/logout em outra aba, token refresh)
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*, department:departments(*), position:positions(*)')
+          .eq('id', session.user.id)
+          .single();
+
+        set({ user: profile as User ?? null, isAuthenticated: !!profile });
+      } else {
+        set({ user: null, isAuthenticated: false });
+      }
+    });
+  },
+
+  login: async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error || !data.session) return false;
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('*, department:departments(*), position:positions(*)')
+      .eq('id', data.session.user.id)
+      .single();
+
+    if (!profile) return false;
+
+    set({ user: profile as User, isAuthenticated: true });
+    return true;
+  },
+
+  logout: async () => {
+    await supabase.auth.signOut();
+    set({ user: null, isAuthenticated: false });
+  },
+
+  setUser: (user: User) => set({ user }),
+}));
 
 export const getRoleLabel = (role: UserRole): string => {
   const labels = { admin: 'Administrador', manager: 'Gestor', employee: 'Colaborador' };
