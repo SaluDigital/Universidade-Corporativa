@@ -41,7 +41,8 @@ export const createUser = async (params: {
   if (error) throw error;
   if (!data.user) throw new Error('Usuário não criado');
 
-  const { error: profileError } = await supabase.from('users').insert({
+  // Usa supabaseAdmin no insert também — bypassa RLS completamente
+  const { error: profileError } = await supabaseAdmin.from('users').insert({
     id: data.user.id,
     name: params.name,
     email: params.email,

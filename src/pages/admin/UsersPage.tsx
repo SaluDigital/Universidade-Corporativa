@@ -91,7 +91,7 @@ export function UsersPage() {
       setIsModalOpen(false);
       await load();
     } catch (e: any) {
-      toast.error(e.message ?? 'Erro ao salvar usuário');
+      toast.error(e.message || 'Erro ao salvar usuário');
     } finally {
       setSaving(false);
     }
