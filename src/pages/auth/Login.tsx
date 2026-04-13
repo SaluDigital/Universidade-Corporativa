@@ -122,8 +122,8 @@ export function Login() {
             transition={{ delay: 0.3 }}
             className="text-5xl font-black text-white mb-4 leading-tight"
           >
-            Universidade
-            <span className="block gradient-text">Corporativa</span>
+            SaluDigital
+            <span className="block gradient-text">Academy</span>
           </motion.h1>
 
           <motion.p
@@ -182,7 +182,7 @@ export function Login() {
             </div>
             <div>
               <p className="font-bold text-white">SaluDigital</p>
-              <p className="text-violet-400 text-xs">Universidade Corporativa</p>
+              <p className="text-[#4BC8C8] text-xs">SaluDigital Academy</p>
             </div>
           </div>
 
@@ -254,7 +254,7 @@ export function Login() {
           </form>
 
           <p className="text-center text-slate-600 text-xs mt-6">
-            Universidade Corporativa SaluDigital © 2026
+            SaluDigital Academy © 2026
           </p>
         </motion.div>
       </div>

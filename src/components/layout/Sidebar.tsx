@@ -105,7 +105,7 @@ export function Sidebar() {
               className="overflow-hidden"
             >
               <p className="font-bold text-white text-sm leading-tight">SaluDigital</p>
-              <p className="text-[#4BC8C8] text-xs font-medium">Universidade</p>
+              <p className="text-[#4BC8C8] text-xs font-medium">Academy</p>
             </motion.div>
           )}
         </AnimatePresence>
