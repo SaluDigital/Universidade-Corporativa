@@ -86,6 +86,9 @@ export const deletePosition = (id: string) =>
 export const getCourses = () =>
   supabase.from('courses').select('*').order('title');
 
+export const getCourseById = (id: string) =>
+  supabase.from('courses').select('*').eq('id', id).single();
+
 export const createCourse = (data: Record<string, unknown>) =>
   supabase.from('courses').insert(data).select().single();
 
@@ -211,3 +214,46 @@ export const getRecentActivity = () =>
     .select('*, user:users(id,name,email)')
     .order('created_at', { ascending: false })
     .limit(5);
+
+// ─── COURSE EXAM ──────────────────────────────────────────
+export const getCourseQuiz = (courseId: string) =>
+  supabase
+    .from('quizzes')
+    .select('*, questions:quiz_questions(*, answers:quiz_answers(*))')
+    .eq('course_id', courseId)
+    .maybeSingle();
+
+export const createCourseQuiz = (data: Record<string, unknown>) =>
+  supabase.from('quizzes').insert(data).select().single();
+
+export const updateCourseQuiz = (id: string, data: Record<string, unknown>) =>
+  supabase.from('quizzes').update(data).eq('id', id);
+
+export const addExamQuestion = (data: Record<string, unknown>) =>
+  supabase.from('quiz_questions').insert(data).select().single();
+
+export const updateExamQuestion = (id: string, question_text: string) =>
+  supabase.from('quiz_questions').update({ question_text }).eq('id', id);
+
+export const deleteExamQuestion = (id: string) =>
+  supabase.from('quiz_questions').delete().eq('id', id);
+
+export const addExamAlternative = (data: Record<string, unknown>) =>
+  supabase.from('quiz_answers').insert(data).select().single();
+
+export const updateExamAlternative = (id: string, data: Record<string, unknown>) =>
+  supabase.from('quiz_answers').update(data).eq('id', id);
+
+export const deleteExamAlternative = (id: string) =>
+  supabase.from('quiz_answers').delete().eq('id', id);
+
+export const saveExamAttempt = (data: Record<string, unknown>) =>
+  supabase.from('user_quiz_attempts').insert(data).select().single();
+
+export const getUserExamAttempts = (userId: string, quizId: string) =>
+  supabase
+    .from('user_quiz_attempts')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('quiz_id', quizId)
+    .order('created_at', { ascending: false });

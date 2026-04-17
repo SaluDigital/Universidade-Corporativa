@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, BookOpen, Clock, Award, CheckCircle, Edit2, Eye, ToggleLeft, Star, Loader2, ToggleRight } from 'lucide-react';
+import { Plus, Search, BookOpen, Clock, Award, CheckCircle, Edit2, ToggleLeft, Star, Loader2, ToggleRight, HelpCircle, Video } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge, StatusBadge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Select, Textarea } from '../../components/ui/Input';
 import { getCourses, createCourse, updateCourse, toggleCourseActive } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
+import { useNavigate } from 'react-router-dom';
 import type { Course } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -26,6 +27,7 @@ const courseGradients = [
 
 export function CoursesPage() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,7 +37,7 @@ export function CoursesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [form, setForm] = useState({
     title: '', description: '', category: '', workload_hours: '',
-    has_certificate: false, requires_exam: false, minimum_grade: '',
+    video_url: '', has_certificate: false, requires_exam: false, minimum_grade: '',
   });
 
   const load = async () => {
@@ -54,7 +56,7 @@ export function CoursesPage() {
 
   const openCreate = () => {
     setEditCourse(null);
-    setForm({ title: '', description: '', category: '', workload_hours: '', has_certificate: false, requires_exam: false, minimum_grade: '' });
+    setForm({ title: '', description: '', category: '', workload_hours: '', video_url: '', has_certificate: false, requires_exam: false, minimum_grade: '' });
     setIsModalOpen(true);
   };
 
@@ -62,8 +64,9 @@ export function CoursesPage() {
     setEditCourse(course);
     setForm({
       title: course.title, description: course.description ?? '', category: course.category ?? '',
-      workload_hours: course.workload_hours.toString(), has_certificate: course.has_certificate,
-      requires_exam: course.requires_exam, minimum_grade: course.minimum_grade?.toString() ?? '',
+      workload_hours: course.workload_hours.toString(), video_url: course.video_url ?? '',
+      has_certificate: course.has_certificate, requires_exam: course.requires_exam,
+      minimum_grade: course.minimum_grade?.toString() ?? '',
     });
     setIsModalOpen(true);
   };
@@ -77,6 +80,7 @@ export function CoursesPage() {
         description: form.description,
         category: form.category,
         workload_hours: parseFloat(form.workload_hours) || 1,
+        video_url: form.video_url || null,
         has_certificate: form.has_certificate,
         requires_exam: form.requires_exam,
         minimum_grade: form.requires_exam ? (parseFloat(form.minimum_grade) || 70) : null,
@@ -159,9 +163,12 @@ export function CoursesPage() {
                       </span>
                     )}
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
                     <button onClick={() => openEdit(course)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-white glass rounded-lg hover:bg-white/20 transition-all">
                       <Edit2 size={11} /> Editar
+                    </button>
+                    <button onClick={() => navigate(`/admin/courses/${course.id}/exam`)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-white glass rounded-lg hover:bg-white/20 transition-all">
+                      <HelpCircle size={11} /> Prova
                     </button>
                     <button onClick={() => handleToggleActive(course)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-white glass rounded-lg hover:bg-white/20 transition-all">
                       {course.is_active ? <ToggleLeft size={11} /> : <ToggleRight size={11} />} {course.is_active ? 'Desativar' : 'Ativar'}
@@ -195,8 +202,9 @@ export function CoursesPage() {
                   {course.has_certificate && <Award size={13} className="text-amber-400" />}
                   <StatusBadge status={course.is_active ? 'active' : 'inactive'} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all"><Edit2 size={14} /></button>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all" title="Editar"><Edit2 size={14} /></button>
+                  <button onClick={() => navigate(`/admin/courses/${course.id}/exam`)} className="p-2 rounded-lg text-slate-500 hover:text-[#9B6FD4] hover:bg-white/10 transition-all" title="Gerenciar Prova"><HelpCircle size={14} /></button>
                   <button onClick={() => handleToggleActive(course)} className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all" title={course.is_active ? 'Desativar' : 'Ativar'}>
                     {course.is_active ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
                   </button>
@@ -220,6 +228,17 @@ export function CoursesPage() {
           <div className="grid grid-cols-2 gap-4">
             <Select label="Categoria" options={[{ value: '', label: 'Selecione...' }, { value: 'Onboarding', label: 'Onboarding' }, { value: 'Cultura', label: 'Cultura' }, { value: 'Comercial', label: 'Comercial' }, { value: 'Gestão', label: 'Gestão' }, { value: 'Marketing', label: 'Marketing' }, { value: 'Técnico', label: 'Técnico' }]} value={form.category} onChange={v => setForm({ ...form, category: v })} />
             <Input label="Carga horária (h)" type="number" value={form.workload_hours} onChange={e => setForm({ ...form, workload_hours: e.target.value })} placeholder="8" />
+          </div>
+          <div className="relative">
+            <Input
+              label="Link do vídeo (YouTube)"
+              value={form.video_url}
+              onChange={e => setForm({ ...form, video_url: e.target.value })}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            {form.video_url && (
+              <Video size={15} className="absolute right-3 top-9 text-red-400" />
+            )}
           </div>
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2.5 cursor-pointer">

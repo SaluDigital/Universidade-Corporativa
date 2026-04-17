@@ -70,7 +70,7 @@ export function MyCoursesPage() {
           <div className="space-y-3">
             {inProgress.map((course, i) => (
               <motion.div key={course.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
-                onClick={() => navigate('/employee/lesson')}
+                onClick={() => navigate(`/employee/courses/${course.id}`)}
                 className="glass-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:border-[#6B35B0]/30 transition-all group"
               >
                 <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${courseGradients[i % courseGradients.length]} flex items-center justify-center flex-shrink-0`}>
@@ -119,7 +119,7 @@ export function MyCoursesPage() {
           <div className="grid sm:grid-cols-2 gap-3">
             {notStarted.map((course, i) => (
               <motion.div key={course.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                onClick={() => navigate('/employee/lesson')}
+                onClick={() => navigate(`/employee/courses/${course.id}`)}
                 className="glass-card rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-[#6B35B0]/20 transition-all group"
               >
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${courseGradients[i % courseGradients.length]} flex items-center justify-center flex-shrink-0`}>

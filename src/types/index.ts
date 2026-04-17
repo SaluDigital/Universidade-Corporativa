@@ -44,6 +44,7 @@ export interface Course {
   description: string;
   category: string;
   thumbnail_url?: string;
+  video_url?: string;
   workload_hours: number;
   is_active: boolean;
   has_certificate: boolean;
@@ -150,11 +151,24 @@ export interface Certificate {
 
 export interface Quiz {
   id: string;
-  lesson_id: string;
+  lesson_id?: string;
+  course_id?: string;
   title: string;
   minimum_grade: number;
   attempt_limit: number;
   questions?: QuizQuestion[];
+}
+
+export interface ExamAttempt {
+  id: string;
+  user_id: string;
+  quiz_id: string;
+  score: number;
+  passed: boolean;
+  attempt_number: number;
+  started_at: string;
+  finished_at?: string;
+  created_at: string;
 }
 
 export interface QuizQuestion {
@@ -171,6 +185,7 @@ export interface QuizAnswer {
   question_id: string;
   answer_text: string;
   is_correct: boolean;
+  sort_order: number;
 }
 
 export interface AuditLog {

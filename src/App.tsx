@@ -25,9 +25,13 @@ import { AlertsPage } from './pages/manager/AlertsPage';
 // Employee pages
 import { MyTrackPage } from './pages/employee/MyTrackPage';
 import { MyCoursesPage } from './pages/employee/MyCoursesPage';
+import { CourseDetailPage } from './pages/employee/CourseDetailPage';
 import { LessonPage } from './pages/employee/LessonPage';
 import { MyCertificatesPage } from './pages/employee/MyCertificatesPage';
 import { HistoryPage } from './pages/employee/HistoryPage';
+
+// Admin exam page
+import { CourseExamPage } from './pages/admin/CourseExamPage';
 
 import type { UserRole } from './types';
 
@@ -56,6 +60,7 @@ const pageTitles: Record<string, { title: string; subtitle?: string }> = {
   '/admin/reports': { title: 'Relatórios', subtitle: 'Analytics e insights' },
   '/admin/certificates': { title: 'Certificados', subtitle: 'Certificados emitidos' },
   '/admin/logs': { title: 'Logs', subtitle: 'Auditoria do sistema' },
+  '/admin/courses/exam': { title: 'Banco de Perguntas', subtitle: 'Gestão da prova do curso' },
   '/manager': { title: 'Minha Equipe', subtitle: 'Painel do gestor' },
   '/manager/team': { title: 'Colaboradores', subtitle: 'Sua equipe' },
   '/manager/progress': { title: 'Progresso', subtitle: 'Acompanhamento de trilhas' },
@@ -63,6 +68,7 @@ const pageTitles: Record<string, { title: string; subtitle?: string }> = {
   '/manager/alerts': { title: 'Alertas', subtitle: 'Pendências e atrasos' },
   '/employee': { title: 'Minha Trilha', subtitle: 'Sua jornada de aprendizado' },
   '/employee/courses': { title: 'Meus Cursos', subtitle: 'Conteúdo disponível' },
+  '/employee/courses/detail': { title: 'Detalhes do Curso', subtitle: 'Conteúdo e avaliação' },
   '/employee/lesson': { title: 'Aula', subtitle: 'Em andamento' },
   '/employee/certificates': { title: 'Certificados', subtitle: 'Suas conquistas' },
   '/employee/history': { title: 'Histórico', subtitle: 'Seu percurso completo' },
@@ -96,6 +102,9 @@ export default function App() {
         </Route>
         <Route path="/admin/courses" element={<ProtectedRoute roles={['admin']}><LayoutWithTitle path="/admin/courses" /></ProtectedRoute>}>
           <Route index element={<CoursesPage />} />
+        </Route>
+        <Route path="/admin/courses/:courseId/exam" element={<ProtectedRoute roles={['admin']}><LayoutWithTitle path="/admin/courses/exam" /></ProtectedRoute>}>
+          <Route index element={<CourseExamPage />} />
         </Route>
         <Route path="/admin/tracks" element={<ProtectedRoute roles={['admin']}><LayoutWithTitle path="/admin/tracks" /></ProtectedRoute>}>
           <Route index element={<TracksPage />} />
@@ -136,6 +145,9 @@ export default function App() {
         </Route>
         <Route path="/employee/courses" element={<ProtectedRoute><LayoutWithTitle path="/employee/courses" /></ProtectedRoute>}>
           <Route index element={<MyCoursesPage />} />
+        </Route>
+        <Route path="/employee/courses/:courseId" element={<ProtectedRoute><LayoutWithTitle path="/employee/courses/detail" /></ProtectedRoute>}>
+          <Route index element={<CourseDetailPage />} />
         </Route>
         <Route path="/employee/lesson" element={<ProtectedRoute><LayoutWithTitle path="/employee/lesson" /></ProtectedRoute>}>
           <Route index element={<LessonPage />} />
