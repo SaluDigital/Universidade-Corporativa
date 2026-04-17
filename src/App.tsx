@@ -30,8 +30,9 @@ import { LessonPage } from './pages/employee/LessonPage';
 import { MyCertificatesPage } from './pages/employee/MyCertificatesPage';
 import { HistoryPage } from './pages/employee/HistoryPage';
 
-// Admin exam page
+// Admin course management pages
 import { CourseExamPage } from './pages/admin/CourseExamPage';
+import { CourseModulesPage } from './pages/admin/CourseModulesPage';
 
 import type { UserRole } from './types';
 
@@ -61,6 +62,7 @@ const pageTitles: Record<string, { title: string; subtitle?: string }> = {
   '/admin/certificates': { title: 'Certificados', subtitle: 'Certificados emitidos' },
   '/admin/logs': { title: 'Logs', subtitle: 'Auditoria do sistema' },
   '/admin/courses/exam': { title: 'Banco de Perguntas', subtitle: 'Gestão da prova do curso' },
+  '/admin/courses/modules': { title: 'Módulos e Aulas', subtitle: 'Conteúdo do curso' },
   '/manager': { title: 'Minha Equipe', subtitle: 'Painel do gestor' },
   '/manager/team': { title: 'Colaboradores', subtitle: 'Sua equipe' },
   '/manager/progress': { title: 'Progresso', subtitle: 'Acompanhamento de trilhas' },
@@ -102,6 +104,9 @@ export default function App() {
         </Route>
         <Route path="/admin/courses" element={<ProtectedRoute roles={['admin']}><LayoutWithTitle path="/admin/courses" /></ProtectedRoute>}>
           <Route index element={<CoursesPage />} />
+        </Route>
+        <Route path="/admin/courses/:courseId/modules" element={<ProtectedRoute roles={['admin']}><LayoutWithTitle path="/admin/courses/modules" /></ProtectedRoute>}>
+          <Route index element={<CourseModulesPage />} />
         </Route>
         <Route path="/admin/courses/:courseId/exam" element={<ProtectedRoute roles={['admin']}><LayoutWithTitle path="/admin/courses/exam" /></ProtectedRoute>}>
           <Route index element={<CourseExamPage />} />

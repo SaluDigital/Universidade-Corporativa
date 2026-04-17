@@ -2,21 +2,25 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronLeft, Clock, Award, CheckCircle, HelpCircle, Video,
-  Loader2, AlertCircle, Trophy, RotateCcw, XCircle, BookOpen,
+  ChevronLeft, Clock, Award, CheckCircle, HelpCircle,
+  Loader2, AlertCircle, Trophy, RotateCcw, XCircle,
+  PlayCircle, ChevronDown, ChevronRight, BookOpen,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { Badge } from '../../components/ui/Badge';
 import { useAuthStore } from '../../store/authStore';
 import {
-  getCourseById, getCourseQuiz, getUserCourseProgress,
-  upsertCourseProgress, saveExamAttempt, getUserExamAttempts,
+  getCourseById, getCourseModules, getCourseQuiz,
+  getUserCourseProgress, getUserLessonProgress,
+  upsertCourseProgress, upsertLessonProgress,
+  saveExamAttempt, getUserExamAttempts,
 } from '../../lib/api';
-import type { Course, Quiz, QuizQuestion, ExamAttempt } from '../../types';
+import type { Course, CourseModule, Lesson, Quiz, ExamAttempt, UserLessonProgress } from '../../types';
 import toast from 'react-hot-toast';
 
 type Phase = 'viewing' | 'exam' | 'result';
+type ModuleWithLessons = CourseModule & { lessons: Lesson[] };
 
 function extractYouTubeId(url: string): string | null {
   const patterns = [
@@ -54,51 +58,76 @@ export function CourseDetailPage() {
   const { user } = useAuthStore();
 
   const [course, setCourse] = useState<Course | null>(null);
+  const [modules, setModules] = useState<ModuleWithLessons[]>([]);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [userProgress, setUserProgress] = useState<any | null>(null);
+  const [lessonProgressMap, setLessonProgressMap] = useState<Record<string, UserLessonProgress>>({});
   const [attempts, setAttempts] = useState<ExamAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [completingLesson, setCompletingLesson] = useState<string | null>(null);
 
   const [phase, setPhase] = useState<Phase>('viewing');
-  const [examQuestions, setExamQuestions] = useState<QuizQuestion[]>([]);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+
+  // Prova
+  const [examQuestions, setExamQuestions] = useState<any[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [examResult, setExamResult] = useState<{ score: number; passed: boolean; correct: number } | null>(null);
   const examStartRef = useRef<string>('');
 
   useEffect(() => {
-    if (!courseId || !user) return;
-    loadData();
+    if (courseId && user) loadData();
   }, [courseId, user]);
 
   const loadData = async () => {
     setLoading(true);
-    const [{ data: courseData }, { data: progressData }, { data: quizData }] = await Promise.all([
+    const [courseRes, progressRes, quizRes, modulesRes] = await Promise.all([
       getCourseById(courseId!),
       getUserCourseProgress(user!.id),
       getCourseQuiz(courseId!),
+      getCourseModules(courseId!),
     ]);
 
-    const course = courseData as Course;
-    setCourse(course);
+    const courseData = courseRes.data as Course;
+    setCourse(courseData);
 
-    const prog = (progressData as any[])?.find(p => p.course_id === courseId) ?? null;
+    const prog = (progressRes.data as any[])?.find(p => p.course_id === courseId) ?? null;
     setUserProgress(prog);
 
-    if (quizData) {
-      const q = quizData as Quiz;
+    // Montar módulos com aulas ordenadas
+    const mods = ((modulesRes.data ?? []) as ModuleWithLessons[]).map(m => ({
+      ...m,
+      lessons: [...(m.lessons ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+    }));
+    setModules(mods);
+    setExpandedModules(new Set(mods.map(m => m.id)));
+
+    // Progresso das aulas
+    const allLessonIds = mods.flatMap(m => m.lessons.map(l => l.id));
+    if (allLessonIds.length > 0) {
+      const { data: lpData } = await getUserLessonProgress(user!.id, allLessonIds);
+      const lpMap = Object.fromEntries(
+        ((lpData ?? []) as UserLessonProgress[]).map(p => [p.lesson_id, p])
+      );
+      setLessonProgressMap(lpMap);
+    }
+
+    // Quiz
+    if (quizRes.data) {
+      const q = quizRes.data as Quiz;
       q.questions = [...(q.questions ?? [])].sort((a, b) => a.sort_order - b.sort_order);
       q.questions.forEach(question => {
         question.answers = [...(question.answers ?? [])].sort((a, b) => a.sort_order - b.sort_order);
       });
       setQuiz(q);
-
       const { data: attemptsData } = await getUserExamAttempts(user!.id, q.id);
       setAttempts((attemptsData as ExamAttempt[]) ?? []);
     }
 
-    // Inicia progresso automaticamente na primeira visita
-    if (!prog && course) {
+    // Inicia progresso na primeira visita
+    if (!prog && courseData) {
       await upsertCourseProgress({
         user_id: user!.id,
         course_id: courseId,
@@ -107,19 +136,83 @@ export function CourseDetailPage() {
         started_at: new Date().toISOString(),
         last_access_at: new Date().toISOString(),
       });
-    } else if (prog) {
-      await upsertCourseProgress({
-        user_id: user!.id,
-        course_id: courseId,
-        status: prog.status,
-        progress_percent: prog.progress_percent,
-        last_access_at: new Date().toISOString(),
-      });
     }
 
     setLoading(false);
   };
 
+  // Calcula % de aulas concluídas
+  const calcProgress = (newMap?: Record<string, UserLessonProgress>) => {
+    const map = newMap ?? lessonProgressMap;
+    const allRequired = modules.flatMap(m => m.lessons.filter(l => l.is_required));
+    if (allRequired.length === 0) return 0;
+    const done = allRequired.filter(l => map[l.id]?.status === 'completed').length;
+    return Math.round((done / allRequired.length) * 100);
+  };
+
+  const completedLessonsCount = () => {
+    return modules.flatMap(m => m.lessons).filter(l => lessonProgressMap[l.id]?.status === 'completed').length;
+  };
+
+  const totalLessonsCount = () => modules.flatMap(m => m.lessons).length;
+
+  const toggleModule = (id: string) => {
+    setExpandedModules(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const selectLesson = (lesson: Lesson) => {
+    setSelectedLesson(prev => prev?.id === lesson.id ? null : lesson);
+  };
+
+  const markLessonComplete = async (lesson: Lesson) => {
+    if (lessonProgressMap[lesson.id]?.status === 'completed') return;
+    setCompletingLesson(lesson.id);
+    try {
+      await upsertLessonProgress({
+        user_id: user!.id,
+        lesson_id: lesson.id,
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      });
+
+      const newMap = {
+        ...lessonProgressMap,
+        [lesson.id]: { status: 'completed' as const, lesson_id: lesson.id, user_id: user!.id, watched_seconds: 0, id: '', completed_at: new Date().toISOString() },
+      };
+      setLessonProgressMap(newMap);
+
+      const pct = calcProgress(newMap);
+      const allDone = pct >= 100;
+      const canComplete = allDone && !course!.requires_exam;
+
+      await upsertCourseProgress({
+        user_id: user!.id,
+        course_id: courseId,
+        status: canComplete ? 'completed' : 'in_progress',
+        progress_percent: pct,
+        completed_at: canComplete ? new Date().toISOString() : null,
+        last_access_at: new Date().toISOString(),
+      });
+
+      setUserProgress((prev: any) => ({ ...prev, progress_percent: pct, status: canComplete ? 'completed' : 'in_progress' }));
+
+      if (canComplete) {
+        toast.success('Parabéns! Você concluiu todas as aulas do curso! 🎉');
+      } else {
+        toast.success('Aula concluída!');
+      }
+    } catch {
+      toast.error('Erro ao marcar aula como concluída');
+    } finally {
+      setCompletingLesson(null);
+    }
+  };
+
+  // ── Prova ──
   const startExam = () => {
     if (!quiz?.questions?.length) return toast.error('Prova ainda não disponível');
     const shuffled = shuffleArray(quiz.questions).slice(0, 10);
@@ -130,82 +223,59 @@ export function CourseDetailPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const completeCourseWithoutExam = async () => {
-    try {
-      await upsertCourseProgress({
-        user_id: user!.id,
-        course_id: courseId,
-        status: 'completed',
-        progress_percent: 100,
-        completed_at: new Date().toISOString(),
-        last_access_at: new Date().toISOString(),
-      });
-      toast.success('Curso concluído!');
-      setUserProgress((prev: any) => ({ ...prev, status: 'completed', progress_percent: 100 }));
-    } catch {
-      toast.error('Erro ao concluir curso');
-    }
-  };
-
   const submitExam = async () => {
     if (Object.keys(answers).length < examQuestions.length) {
       return toast.error('Responda todas as perguntas antes de enviar');
     }
-
     setSubmitting(true);
     try {
       let correct = 0;
       examQuestions.forEach(q => {
-        const selectedId = answers[q.id];
-        const correctAnswer = q.answers?.find(a => a.is_correct);
-        if (selectedId && correctAnswer && selectedId === correctAnswer.id) correct++;
+        const correctAnswer = q.answers?.find((a: any) => a.is_correct);
+        if (answers[q.id] && correctAnswer && answers[q.id] === correctAnswer.id) correct++;
       });
 
       const score = Math.round((correct / examQuestions.length) * 100);
       const minimumGrade = quiz?.minimum_grade ?? 70;
       const passed = score >= minimumGrade;
 
-      const attemptNumber = attempts.length + 1;
-
-      const { error: attemptErr } = await saveExamAttempt({
+      await saveExamAttempt({
         user_id: user!.id,
         quiz_id: quiz!.id,
         score,
         passed,
-        attempt_number: attemptNumber,
+        attempt_number: attempts.length + 1,
         started_at: examStartRef.current,
         finished_at: new Date().toISOString(),
       });
-      if (attemptErr) throw attemptErr;
 
-      // Atualiza progresso do curso — o trigger auto_issue_certificate dispara aqui
+      const currentPct = calcProgress();
       await upsertCourseProgress({
         user_id: user!.id,
         course_id: courseId,
         status: passed ? 'completed' : 'in_progress',
-        progress_percent: passed ? 100 : userProgress?.progress_percent ?? 50,
+        progress_percent: passed ? 100 : currentPct,
         grade: score,
         completed_at: passed ? new Date().toISOString() : null,
         last_access_at: new Date().toISOString(),
       });
 
-      setExamResult({ score, passed, correct });
-      setPhase('result');
-
       if (passed) {
         setUserProgress((prev: any) => ({ ...prev, status: 'completed', progress_percent: 100, grade: score }));
-        setAttempts(prev => [{ id: '', user_id: user!.id, quiz_id: quiz!.id, score, passed, attempt_number: attemptNumber, started_at: examStartRef.current, created_at: new Date().toISOString() }, ...prev]);
+        setAttempts(prev => [{
+          id: '', user_id: user!.id, quiz_id: quiz!.id,
+          score, passed, attempt_number: attempts.length + 1,
+          started_at: examStartRef.current, created_at: new Date().toISOString(),
+        }, ...prev]);
       }
+
+      setExamResult({ score, passed, correct });
+      setPhase('result');
     } catch (e: any) {
       toast.error(e.message ?? 'Erro ao enviar respostas');
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const retryExam = () => {
-    setExamResult(null);
-    startExam();
   };
 
   if (loading) return (
@@ -220,14 +290,15 @@ export function CourseDetailPage() {
     </div>
   );
 
-  const embedUrl = course.video_url ? extractYouTubeId(course.video_url) : null;
   const isCompleted = userProgress?.status === 'completed';
+  const progressPct = userProgress?.progress_percent ?? 0;
   const hasQuiz = !!quiz && (quiz.questions?.length ?? 0) > 0;
   const minimumGrade = quiz?.minimum_grade ?? 70;
-  const bestAttempt = attempts.reduce<ExamAttempt | null>((best, a) => (!best || a.score > best.score ? a : best), null);
+  const totalLessons = totalLessonsCount();
+  const doneLessons = completedLessonsCount();
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-5">
       {/* Header */}
       <div className="flex items-start gap-3">
         <button
@@ -238,20 +309,14 @@ export function CourseDetailPage() {
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            {course.category && (
-              <Badge variant={(categoryColors[course.category] ?? 'slate') as any}>{course.category}</Badge>
-            )}
-            {isCompleted && (
-              <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
-                <CheckCircle size={12} /> Concluído
-              </span>
-            )}
+            {course.category && <Badge variant={(categoryColors[course.category] ?? 'slate') as any}>{course.category}</Badge>}
+            {isCompleted && <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium"><CheckCircle size={12} /> Concluído</span>}
           </div>
-          <h2 className="text-2xl font-bold text-white leading-snug">{course.title}</h2>
-          <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-            <span className="flex items-center gap-1"><Clock size={11} />{course.workload_hours}h de conteúdo</span>
-            {course.has_certificate && <span className="flex items-center gap-1 text-amber-400"><Award size={11} />Emite certificado</span>}
-            {course.requires_exam && <span className="flex items-center gap-1 text-[#9B6FD4]"><HelpCircle size={11} />Requer avaliação</span>}
+          <h2 className="text-xl font-bold text-white leading-snug">{course.title}</h2>
+          <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-500">
+            <span className="flex items-center gap-1"><Clock size={10} />{course.workload_hours}h</span>
+            <span className="flex items-center gap-1"><BookOpen size={10} />{totalLessons} aulas</span>
+            {course.has_certificate && <span className="flex items-center gap-1 text-amber-400"><Award size={10} />Certifica</span>}
           </div>
         </div>
       </div>
@@ -260,50 +325,168 @@ export function CourseDetailPage() {
 
         {/* ── FASE: ASSISTINDO ── */}
         {phase === 'viewing' && (
-          <motion.div key="viewing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
+          <motion.div key="viewing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
 
-            {/* Player YouTube */}
-            {embedUrl ? (
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/5 bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed/${embedUrl}?rel=0&modestbranding=1`}
-                  title={course.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                />
+            {/* Barra de progresso */}
+            <div className="glass-card rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-slate-400">Progresso do curso</span>
+                <span className="text-xs font-bold text-white">{doneLessons}/{totalLessons} aulas · {progressPct}%</span>
+              </div>
+              <ProgressBar value={progressPct} size="sm" />
+            </div>
+
+            {/* Player da aula selecionada */}
+            <AnimatePresence>
+              {selectedLesson && (
+                <motion.div
+                  key={selectedLesson.id}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="glass-card rounded-2xl overflow-hidden"
+                >
+                  {/* Título da aula */}
+                  <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                    <div>
+                      <p className="text-xs text-slate-500 mb-0.5">Assistindo agora</p>
+                      <p className="text-sm font-semibold text-white">{selectedLesson.title}</p>
+                    </div>
+                    {lessonProgressMap[selectedLesson.id]?.status === 'completed' && (
+                      <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
+                        <CheckCircle size={13} /> Concluída
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Vídeo YouTube */}
+                  {selectedLesson.content_url && extractYouTubeId(selectedLesson.content_url) ? (
+                    <div className="relative w-full aspect-video bg-black">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${extractYouTubeId(selectedLesson.content_url)}?rel=0&modestbranding=1`}
+                        title={selectedLesson.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-video bg-slate-900 flex items-center justify-center">
+                      <p className="text-slate-600 text-sm">Vídeo não configurado</p>
+                    </div>
+                  )}
+
+                  {/* Botão concluir aula */}
+                  {lessonProgressMap[selectedLesson.id]?.status !== 'completed' && (
+                    <div className="px-4 pb-4 pt-3">
+                      <Button
+                        onClick={() => markLessonComplete(selectedLesson)}
+                        disabled={completingLesson === selectedLesson.id}
+                        icon={completingLesson === selectedLesson.id
+                          ? <Loader2 size={14} className="animate-spin" />
+                          : <CheckCircle size={14} />}
+                        className="w-full justify-center"
+                      >
+                        {completingLesson === selectedLesson.id ? 'Salvando...' : 'Marcar aula como concluída'}
+                      </Button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Módulos e Aulas */}
+            {modules.length === 0 ? (
+              <div className="glass-card rounded-2xl p-10 text-center">
+                <BookOpen size={32} className="text-slate-700 mx-auto mb-3" />
+                <p className="text-slate-500">Conteúdo em preparação.</p>
               </div>
             ) : (
-              <div className="w-full aspect-video rounded-2xl bg-gradient-to-br from-[#6B35B0]/20 to-slate-900 border border-white/5 flex flex-col items-center justify-center gap-3">
-                <Video size={40} className="text-slate-700" />
-                <p className="text-slate-600 text-sm">Vídeo não configurado</p>
-              </div>
-            )}
+              <div className="space-y-2">
+                {modules.map((mod, modIdx) => {
+                  const modDone = mod.lessons.filter(l => lessonProgressMap[l.id]?.status === 'completed').length;
+                  const modTotal = mod.lessons.length;
+                  const modPct = modTotal > 0 ? Math.round((modDone / modTotal) * 100) : 0;
 
-            {/* Descrição */}
-            {course.description && (
-              <div className="glass-card rounded-2xl p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <BookOpen size={15} className="text-[#9B6FD4]" />
-                  <h3 className="text-sm font-semibold text-white">Sobre este curso</h3>
-                </div>
-                <p className="text-slate-400 text-sm leading-relaxed">{course.description}</p>
-              </div>
-            )}
+                  return (
+                    <div key={mod.id} className="glass-card rounded-2xl overflow-hidden">
+                      {/* Cabeçalho do módulo */}
+                      <button
+                        onClick={() => toggleModule(mod.id)}
+                        className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/2 transition-all"
+                      >
+                        <span className="w-7 h-7 rounded-lg bg-[#6B35B0]/20 flex items-center justify-center text-xs font-bold text-[#C4A8E8] flex-shrink-0">
+                          {modIdx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{mod.title}</p>
+                          <p className="text-xs text-slate-600 mt-0.5">{modDone}/{modTotal} aulas concluídas</p>
+                        </div>
+                        {modPct === 100 && <CheckCircle size={14} className="text-emerald-400 flex-shrink-0" />}
+                        {expandedModules.has(mod.id)
+                          ? <ChevronDown size={14} className="text-slate-500 flex-shrink-0" />
+                          : <ChevronRight size={14} className="text-slate-500 flex-shrink-0" />
+                        }
+                      </button>
 
-            {/* Progresso */}
-            {userProgress && (
-              <div className="glass-card rounded-2xl p-4">
-                <div className="flex justify-between items-center mb-2 text-xs text-slate-500">
-                  <span>Seu progresso</span>
-                  <span>{userProgress.progress_percent ?? 0}%</span>
-                </div>
-                <ProgressBar value={userProgress.progress_percent ?? 0} size="sm" />
-                {userProgress.grade != null && (
-                  <p className="text-xs text-slate-500 mt-2">
-                    Melhor nota: <span className={userProgress.grade >= minimumGrade ? 'text-emerald-400' : 'text-red-400'}>{userProgress.grade}%</span>
-                  </p>
-                )}
+                      {/* Aulas */}
+                      <AnimatePresence>
+                        {expandedModules.has(mod.id) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="border-t border-white/5 divide-y divide-white/3">
+                              {mod.lessons.map((lesson, lessonIdx) => {
+                                const isLessonDone = lessonProgressMap[lesson.id]?.status === 'completed';
+                                const isSelected = selectedLesson?.id === lesson.id;
+
+                                return (
+                                  <button
+                                    key={lesson.id}
+                                    onClick={() => selectLesson(lesson)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${
+                                      isSelected
+                                        ? 'bg-[#6B35B0]/10 border-l-2 border-[#6B35B0]'
+                                        : 'hover:bg-white/2'
+                                    }`}
+                                  >
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                                      isLessonDone
+                                        ? 'bg-emerald-500/20 border border-emerald-500/30'
+                                        : isSelected
+                                        ? 'bg-[#6B35B0]/30 border border-[#6B35B0]/40'
+                                        : 'bg-white/5 border border-white/10'
+                                    }`}>
+                                      {isLessonDone
+                                        ? <CheckCircle size={12} className="text-emerald-400" />
+                                        : <PlayCircle size={12} className={isSelected ? 'text-[#C4A8E8]' : 'text-slate-600'} />
+                                      }
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-sm truncate ${isLessonDone ? 'text-slate-400' : isSelected ? 'text-white font-medium' : 'text-slate-300'}`}>
+                                        <span className="text-slate-600 text-xs mr-1.5">{modIdx + 1}.{lessonIdx + 1}</span>
+                                        {lesson.title}
+                                      </p>
+                                    </div>
+                                    {lesson.duration_minutes && (
+                                      <span className="text-xs text-slate-600 flex-shrink-0 flex items-center gap-1">
+                                        <Clock size={9} />{lesson.duration_minutes}min
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -311,47 +494,38 @@ export function CourseDetailPage() {
             {course.requires_exam && (
               <div className="glass-card rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2">
-                  <HelpCircle size={16} className="text-[#9B6FD4]" />
+                  <HelpCircle size={15} className="text-[#9B6FD4]" />
                   <h3 className="text-sm font-semibold text-white">Avaliação Final</h3>
                 </div>
 
                 {isCompleted ? (
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                     <Trophy size={18} className="text-emerald-400" />
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-emerald-300">Aprovado!</p>
-                      <p className="text-xs text-emerald-400/70">
-                        Nota: {userProgress?.grade}% · Nota mínima: {minimumGrade}%
-                      </p>
+                      <p className="text-xs text-emerald-400/70">Nota: {userProgress?.grade}% · Mínimo: {minimumGrade}%</p>
                     </div>
                     {course.has_certificate && (
-                      <Button
-                        variant="secondary"
-                        className="ml-auto"
-                        onClick={() => navigate('/employee/certificates')}
-                        icon={<Award size={14} />}
-                      >
-                        Ver certificado
+                      <Button variant="secondary" onClick={() => navigate('/employee/certificates')} icon={<Award size={13} />}>
+                        Certificado
                       </Button>
                     )}
                   </div>
                 ) : (
                   <>
                     <div className="text-xs text-slate-500 space-y-1">
-                      <p>• A prova contém <span className="text-white">10 perguntas</span> selecionadas aleatoriamente</p>
-                      <p>• Nota mínima para aprovação: <span className="text-white">{minimumGrade}%</span></p>
-                      <p>• Você pode refazer a prova quantas vezes precisar</p>
+                      <p>• Prova com <span className="text-white">10 perguntas</span> selecionadas aleatoriamente</p>
+                      <p>• Nota mínima: <span className="text-white">{minimumGrade}%</span></p>
+                      <p>• Sem limite de tentativas</p>
                     </div>
 
                     {attempts.length > 0 && (
                       <div className="space-y-1.5">
-                        <p className="text-xs text-slate-600 font-medium uppercase tracking-wide">Tentativas anteriores</p>
+                        <p className="text-xs text-slate-600 font-medium uppercase tracking-wide">Tentativas</p>
                         {attempts.slice(0, 3).map((a, i) => (
                           <div key={i} className="flex items-center justify-between px-3 py-2 rounded-xl border border-white/5 text-xs">
                             <span className="text-slate-500">Tentativa {a.attempt_number}</span>
-                            <span className={a.passed ? 'text-emerald-400' : 'text-red-400'}>
-                              {a.score}% {a.passed ? '✓' : '✗'}
-                            </span>
+                            <span className={a.passed ? 'text-emerald-400 font-medium' : 'text-red-400'}>{a.score}%</span>
                           </div>
                         ))}
                       </div>
@@ -359,11 +533,10 @@ export function CourseDetailPage() {
 
                     {!hasQuiz ? (
                       <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-                        <AlertCircle size={13} />
-                        Avaliação em preparação — disponível em breve.
+                        <AlertCircle size={13} /> Avaliação em preparação.
                       </div>
                     ) : (
-                      <Button onClick={startExam} icon={<HelpCircle size={15} />} className="w-full justify-center">
+                      <Button onClick={startExam} icon={<HelpCircle size={14} />} className="w-full justify-center">
                         {attempts.length > 0 ? 'Refazer Avaliação' : 'Iniciar Avaliação'}
                       </Button>
                     )}
@@ -373,16 +546,16 @@ export function CourseDetailPage() {
             )}
 
             {/* Concluir sem prova */}
-            {!course.requires_exam && !isCompleted && (
-              <Button onClick={completeCourseWithoutExam} icon={<CheckCircle size={15} />} className="w-full justify-center">
-                Marcar como concluído
-              </Button>
-            )}
-
-            {!course.requires_exam && isCompleted && course.has_certificate && (
-              <Button variant="secondary" onClick={() => navigate('/employee/certificates')} icon={<Award size={15} />} className="w-full justify-center">
-                Ver meu certificado
-              </Button>
+            {!course.requires_exam && !isCompleted && totalLessons > 0 && progressPct >= 100 && (
+              <div className="glass-card rounded-2xl p-4 border border-emerald-500/20 bg-emerald-500/5 text-center">
+                <CheckCircle size={24} className="text-emerald-400 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-white mb-1">Todas as aulas concluídas!</p>
+                {course.has_certificate && (
+                  <Button onClick={() => navigate('/employee/certificates')} icon={<Award size={14} />} className="mt-2">
+                    Ver certificado
+                  </Button>
+                )}
+              </div>
             )}
           </motion.div>
         )}
@@ -393,30 +566,21 @@ export function CourseDetailPage() {
             <div className="glass-card rounded-2xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <HelpCircle size={15} className="text-[#9B6FD4]" />
-                <span className="text-sm font-medium text-white">Avaliação Final</span>
+                <span className="text-sm font-semibold text-white">Avaliação Final</span>
               </div>
-              <span className="text-xs text-slate-500">
-                {Object.keys(answers).length}/{examQuestions.length} respondidas
-              </span>
+              <span className="text-xs text-slate-500">{Object.keys(answers).length}/{examQuestions.length} respondidas</span>
             </div>
 
             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
               <motion.div
                 animate={{ width: `${(Object.keys(answers).length / examQuestions.length) * 100}%` }}
-                transition={{ duration: 0.3 }}
                 className="h-full bg-gradient-to-r from-[#6B35B0] to-[#4BC8C8] rounded-full"
               />
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               {examQuestions.map((q, qi) => (
-                <motion.div
-                  key={q.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: qi * 0.04 }}
-                  className="glass-card rounded-2xl p-5"
-                >
+                <motion.div key={q.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: qi * 0.04 }} className="glass-card rounded-2xl p-5">
                   <div className="flex items-start gap-3 mb-4">
                     <span className="w-7 h-7 rounded-lg bg-[#6B35B0]/20 border border-[#6B35B0]/20 flex items-center justify-center text-xs font-bold text-[#C4A8E8] flex-shrink-0">
                       {qi + 1}
@@ -424,7 +588,7 @@ export function CourseDetailPage() {
                     <p className="text-sm font-medium text-white leading-relaxed">{q.question_text}</p>
                   </div>
                   <div className="space-y-2 pl-10">
-                    {[...(q.answers ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((ans, ai) => (
+                    {[...(q.answers ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order).map((ans: any, ai: number) => (
                       <button
                         key={ans.id}
                         onClick={() => setAnswers(prev => ({ ...prev, [q.id]: ans.id }))}
@@ -446,14 +610,12 @@ export function CourseDetailPage() {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button variant="secondary" onClick={() => setPhase('viewing')}>
-                <ChevronLeft size={15} /> Voltar
-              </Button>
+              <Button variant="secondary" onClick={() => setPhase('viewing')}><ChevronLeft size={15} /> Voltar</Button>
               <Button
                 onClick={submitExam}
                 disabled={submitting || Object.keys(answers).length < examQuestions.length}
                 className="flex-1 justify-center"
-                icon={submitting ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle size={15} />}
+                icon={submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
               >
                 {submitting ? 'Enviando...' : 'Enviar Respostas'}
               </Button>
@@ -463,35 +625,23 @@ export function CourseDetailPage() {
 
         {/* ── FASE: RESULTADO ── */}
         {phase === 'result' && examResult && (
-          <motion.div key="result" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-5">
-            <div className={`glass-card rounded-2xl p-8 text-center border ${
-              examResult.passed ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-red-500/20 bg-red-500/5'
-            }`}>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-                className="mb-4"
-              >
+          <motion.div key="result" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+            <div className={`glass-card rounded-2xl p-8 text-center border ${examResult.passed ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-red-500/20 bg-red-500/5'}`}>
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.1 }} className="mb-4">
                 {examResult.passed
                   ? <Trophy size={52} className="text-amber-400 mx-auto" />
                   : <XCircle size={52} className="text-red-400 mx-auto" />}
               </motion.div>
-
               <h3 className={`text-2xl font-bold mb-1 ${examResult.passed ? 'text-emerald-300' : 'text-red-300'}`}>
                 {examResult.passed ? 'Aprovado!' : 'Não aprovado'}
               </h3>
-              <p className="text-slate-400 text-sm mb-5">
-                {examResult.passed
-                  ? 'Parabéns! Você atingiu a nota mínima.'
-                  : `Você precisa de ${minimumGrade}% para ser aprovado. Tente novamente!`}
+              <p className="text-slate-400 text-sm mb-6">
+                {examResult.passed ? 'Parabéns! Você atingiu a nota mínima.' : `Nota mínima: ${minimumGrade}%. Tente novamente!`}
               </p>
 
               <div className="flex items-center justify-center gap-8 mb-6">
                 <div>
-                  <p className={`text-4xl font-bold ${examResult.passed ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {examResult.score}%
-                  </p>
+                  <p className={`text-4xl font-bold ${examResult.passed ? 'text-emerald-400' : 'text-red-400'}`}>{examResult.score}%</p>
                   <p className="text-xs text-slate-600 mt-0.5">sua nota</p>
                 </div>
                 <div className="w-px h-10 bg-white/10" />
@@ -499,33 +649,20 @@ export function CourseDetailPage() {
                   <p className="text-4xl font-bold text-slate-300">{examResult.correct}/10</p>
                   <p className="text-xs text-slate-600 mt-0.5">acertos</p>
                 </div>
-                <div className="w-px h-10 bg-white/10" />
-                <div>
-                  <p className="text-4xl font-bold text-slate-500">{minimumGrade}%</p>
-                  <p className="text-xs text-slate-600 mt-0.5">mínimo</p>
-                </div>
               </div>
 
-              <div className="flex gap-3 justify-center">
+              <div className="flex gap-3 justify-center flex-wrap">
                 {examResult.passed ? (
                   <>
                     {course.has_certificate && (
-                      <Button onClick={() => navigate('/employee/certificates')} icon={<Award size={15} />}>
-                        Ver certificado
-                      </Button>
+                      <Button onClick={() => navigate('/employee/certificates')} icon={<Award size={14} />}>Ver certificado</Button>
                     )}
-                    <Button variant="secondary" onClick={() => setPhase('viewing')}>
-                      Voltar ao curso
-                    </Button>
+                    <Button variant="secondary" onClick={() => setPhase('viewing')}>Voltar ao curso</Button>
                   </>
                 ) : (
                   <>
-                    <Button onClick={retryExam} icon={<RotateCcw size={15} />}>
-                      Tentar novamente
-                    </Button>
-                    <Button variant="secondary" onClick={() => setPhase('viewing')}>
-                      Voltar ao curso
-                    </Button>
+                    <Button onClick={() => { setExamResult(null); startExam(); }} icon={<RotateCcw size={14} />}>Tentar novamente</Button>
+                    <Button variant="secondary" onClick={() => setPhase('viewing')}>Voltar ao curso</Button>
                   </>
                 )}
               </div>

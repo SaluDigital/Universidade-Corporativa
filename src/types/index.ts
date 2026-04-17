@@ -188,6 +188,15 @@ export interface QuizAnswer {
   sort_order: number;
 }
 
+export interface UserLessonProgress {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  status: LessonStatus;
+  watched_seconds: number;
+  completed_at?: string;
+}
+
 export interface AuditLog {
   id: string;
   user_id: string;

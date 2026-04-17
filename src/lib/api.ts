@@ -215,6 +215,32 @@ export const getRecentActivity = () =>
     .order('created_at', { ascending: false })
     .limit(5);
 
+// ─── COURSE MODULES & LESSONS ────────────────────────────
+export const getCourseModules = (courseId: string) =>
+  supabase
+    .from('course_modules')
+    .select('*, lessons(*)')
+    .eq('course_id', courseId)
+    .order('sort_order');
+
+export const createModule = (data: Record<string, unknown>) =>
+  supabase.from('course_modules').insert(data).select().single();
+
+export const updateModule = (id: string, data: Record<string, unknown>) =>
+  supabase.from('course_modules').update(data).eq('id', id);
+
+export const deleteModule = (id: string) =>
+  supabase.from('course_modules').delete().eq('id', id);
+
+export const createLesson = (data: Record<string, unknown>) =>
+  supabase.from('lessons').insert(data).select().single();
+
+export const updateLesson = (id: string, data: Record<string, unknown>) =>
+  supabase.from('lessons').update(data).eq('id', id);
+
+export const deleteLesson = (id: string) =>
+  supabase.from('lessons').delete().eq('id', id);
+
 // ─── COURSE EXAM ──────────────────────────────────────────
 export const getCourseQuiz = (courseId: string) =>
   supabase

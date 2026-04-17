@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, BookOpen, Clock, Award, CheckCircle, Edit2, ToggleLeft, Star, Loader2, ToggleRight, HelpCircle, Video } from 'lucide-react';
+import { Plus, Search, BookOpen, Clock, Award, CheckCircle, Edit2, ToggleLeft, Star, Loader2, ToggleRight, HelpCircle, Video, Layers } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge, StatusBadge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
@@ -163,25 +163,29 @@ export function CoursesPage() {
                       </span>
                     )}
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
-                    <button onClick={() => openEdit(course)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-white glass rounded-lg hover:bg-white/20 transition-all">
-                      <Edit2 size={11} /> Editar
-                    </button>
-                    <button onClick={() => navigate(`/admin/courses/${course.id}/exam`)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-white glass rounded-lg hover:bg-white/20 transition-all">
-                      <HelpCircle size={11} /> Prova
-                    </button>
-                    <button onClick={() => handleToggleActive(course)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-white glass rounded-lg hover:bg-white/20 transition-all">
-                      {course.is_active ? <ToggleLeft size={11} /> : <ToggleRight size={11} />} {course.is_active ? 'Desativar' : 'Ativar'}
-                    </button>
-                  </div>
                 </div>
                 <div className="p-4">
                   <h4 className="font-semibold text-white text-sm mb-1 line-clamp-2">{course.title}</h4>
                   <p className="text-slate-500 text-xs mb-3 line-clamp-2">{course.description}</p>
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
                     <span className="flex items-center gap-1"><Clock size={11} /> {course.workload_hours}h</span>
                     {course.requires_exam && <span className="flex items-center gap-1"><CheckCircle size={11} className="text-[#4BC8C8]" /> Avaliação</span>}
                     <span className="flex items-center gap-1 ml-auto"><Star size={11} className="text-slate-600" /> v{course.version}</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1 border-t border-white/5 pt-3">
+                    <button onClick={() => openEdit(course)} className="flex flex-col items-center gap-1 py-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/8 transition-all text-[10px]">
+                      <Edit2 size={13} /> Editar
+                    </button>
+                    <button onClick={() => navigate(`/admin/courses/${course.id}/modules`)} className="flex flex-col items-center gap-1 py-1.5 rounded-lg text-slate-500 hover:text-[#4BC8C8] hover:bg-[#4BC8C8]/8 transition-all text-[10px]">
+                      <Layers size={13} /> Módulos
+                    </button>
+                    <button onClick={() => navigate(`/admin/courses/${course.id}/exam`)} className="flex flex-col items-center gap-1 py-1.5 rounded-lg text-slate-500 hover:text-[#9B6FD4] hover:bg-[#9B6FD4]/8 transition-all text-[10px]">
+                      <HelpCircle size={13} /> Prova
+                    </button>
+                    <button onClick={() => handleToggleActive(course)} className="flex flex-col items-center gap-1 py-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/8 transition-all text-[10px]">
+                      {course.is_active ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
+                      {course.is_active ? 'Desativar' : 'Ativar'}
+                    </button>
                   </div>
                 </div>
               </>
@@ -204,6 +208,7 @@ export function CoursesPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => openEdit(course)} className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all" title="Editar"><Edit2 size={14} /></button>
+                  <button onClick={() => navigate(`/admin/courses/${course.id}/modules`)} className="p-2 rounded-lg text-slate-500 hover:text-[#4BC8C8] hover:bg-white/10 transition-all" title="Módulos e Aulas"><Layers size={14} /></button>
                   <button onClick={() => navigate(`/admin/courses/${course.id}/exam`)} className="p-2 rounded-lg text-slate-500 hover:text-[#9B6FD4] hover:bg-white/10 transition-all" title="Gerenciar Prova"><HelpCircle size={14} /></button>
                   <button onClick={() => handleToggleActive(course)} className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-all" title={course.is_active ? 'Desativar' : 'Ativar'}>
                     {course.is_active ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
