@@ -215,6 +215,7 @@ export function CourseDetailPage() {
   // ── Prova ──
   const startExam = () => {
     if (!quiz?.questions?.length) return toast.error('Prova ainda não disponível');
+    if (progressPct < 100) return toast.error('Conclua 100% das aulas antes de iniciar a avaliação');
     const shuffled = shuffleArray(quiz.questions).slice(0, 10);
     setExamQuestions(shuffled);
     setAnswers({});
@@ -294,6 +295,7 @@ export function CourseDetailPage() {
   const progressPct = userProgress?.progress_percent ?? 0;
   const hasQuiz = !!quiz && (quiz.questions?.length ?? 0) > 0;
   const minimumGrade = quiz?.minimum_grade ?? 70;
+  const alreadyPassed = attempts.some(a => a.passed);
   const totalLessons = totalLessonsCount();
   const doneLessons = completedLessonsCount();
 
@@ -567,9 +569,13 @@ export function CourseDetailPage() {
                       <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
                         <AlertCircle size={13} /> Avaliação em preparação.
                       </div>
+                    ) : progressPct < 100 ? (
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-500/10 border border-slate-500/20 text-xs text-slate-400">
+                        <AlertCircle size={13} /> Conclua todas as aulas para liberar a avaliação ({progressPct}% concluído).
+                      </div>
                     ) : (
                       <Button onClick={startExam} icon={<HelpCircle size={14} />} className="w-full justify-center">
-                        {attempts.length > 0 ? 'Refazer Avaliação' : 'Iniciar Avaliação'}
+                        Iniciar Avaliação
                       </Button>
                     )}
                   </>
