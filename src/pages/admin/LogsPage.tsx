@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, User, BookOpen, Award, GitBranch, Shield, Loader2 } from 'lucide-react';
 import { Avatar } from '../../components/ui/Avatar';
-import { getAuditLogs } from '../../lib/api';
+import { getActivityFeed } from '../../lib/api';
 import { formatDateTime } from '../../lib/utils';
 
 const actionConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
@@ -22,7 +22,7 @@ export function LogsPage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await getAuditLogs();
+      const { data } = await getActivityFeed();
       setLogs(data ?? []);
       setLoading(false);
     })();
@@ -101,8 +101,8 @@ export function LogsPage() {
                         <span className="text-xs text-slate-500 font-mono">{log.action}</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-xs text-slate-500 font-mono">{log.entity_type}:{log.entity_id}</td>
-                    <td className="px-5 py-4 text-xs text-slate-600 font-mono">{log.ip_address}</td>
+                    <td className="px-5 py-4 text-xs text-slate-500 max-w-xs"><span className="truncate block">{log.meta ?? `${log.entity_type}:${log.entity_id}`}</span></td>
+                    <td className="px-5 py-4 text-xs text-slate-600 font-mono">{log.ip_address ?? '—'}</td>
                     <td className="px-5 py-4 text-xs text-slate-500 whitespace-nowrap">{formatDateTime(log.created_at)}</td>
                   </motion.tr>
                 );

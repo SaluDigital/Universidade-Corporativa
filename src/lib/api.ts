@@ -201,8 +201,35 @@ export const getAuditLogs = () =>
 export const getUserProgressSummary = () =>
   supabase.from('v_user_progress_summary').select('*');
 
-export const getCompletionByDepartment = () =>
-  supabase.from('v_completion_by_department').select('*').order('department_name');
+export const getCompletionByDepartment = async (): Promise<{ data: any[]; error: null }> => {
+  const [{ data: users }, { data: progress }] = await Promise.all([
+    supabase.from('users').select('id, department_id, department:departments(id,name)'),
+    supabase.from('user_course_progress').select('user_id, status'),
+  ]);
+  const deptMap: Record<string, { name: string; total: Set<string>; completedSet: Set<string> }> = {};
+  (users ?? []).forEach((u: any) => {
+    if (!u.department_id) return;
+    const dname = u.department?.name ?? 'Sem departamento';
+    if (!deptMap[u.department_id]) deptMap[u.department_id] = { name: dname, total: new Set(), completedSet: new Set() };
+    deptMap[u.department_id].total.add(u.id);
+  });
+  const userDeptMap: Record<string, string> = {};
+  (users ?? []).forEach((u: any) => { if (u.department_id) userDeptMap[u.id] = u.department_id; });
+  (progress ?? []).forEach((p: any) => {
+    const deptId = userDeptMap[p.user_id];
+    if (deptId && p.status === 'completed' && deptMap[deptId]) deptMap[deptId].completedSet.add(p.user_id);
+  });
+  const data = Object.values(deptMap)
+    .filter(d => d.total.size > 0)
+    .map(d => ({
+      department_name: d.name,
+      total_users: d.total.size,
+      completed_users: d.completedSet.size,
+      completion_rate: Math.round((d.completedSet.size / d.total.size) * 100),
+    }))
+    .sort((a, b) => a.department_name.localeCompare(b.department_name));
+  return { data, error: null };
+};
 
 export const getOverdueTracks = () =>
   supabase.from('v_overdue_tracks').select('*');
@@ -227,13 +254,99 @@ export const getTopCourses = () =>
     .select('course_id, courses(title)')
     .eq('status', 'completed');
 
-// ─── RECENT AUDIT LOGS ────────────────────────────────────
-export const getRecentActivity = () =>
-  supabase
-    .from('audit_logs')
-    .select('*, user:users(id,name,email)')
-    .order('created_at', { ascending: false })
-    .limit(5);
+// ─── RECENT ACTIVITY (real tables, not audit_logs) ────────
+export const getRecentActivity = async (): Promise<{ data: any[]; error: null }> => {
+  const [{ data: completions }, { data: certs }] = await Promise.all([
+    supabase
+      .from('user_course_progress')
+      .select('id, completed_at, user_id, course_id, user:users(id,name,email), course:courses(id,title)')
+      .eq('status', 'completed')
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('certificates')
+      .select('id, issued_at, user_id, course_id, user:users(id,name,email), course:courses(id,title)')
+      .order('issued_at', { ascending: false })
+      .limit(10),
+  ]);
+  const events = [
+    ...(completions ?? []).map((c: any) => ({
+      id: `cp-${c.id}`,
+      action: 'COMPLETE_LESSON',
+      created_at: c.completed_at,
+      user: c.user,
+      meta: c.course?.title,
+    })),
+    ...(certs ?? []).map((c: any) => ({
+      id: `cert-${c.id}`,
+      action: 'ISSUE_CERTIFICATE',
+      created_at: c.issued_at,
+      user: c.user,
+      meta: c.course?.title,
+    })),
+  ]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 8);
+  return { data: events, error: null };
+};
+
+export const getActivityFeed = async (): Promise<{ data: any[]; error: null }> => {
+  const [{ data: completions }, { data: certs }, { data: newUsers }] = await Promise.all([
+    supabase
+      .from('user_course_progress')
+      .select('id, completed_at, user_id, course_id, user:users(id,name,email,role), course:courses(id,title)')
+      .eq('status', 'completed')
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('certificates')
+      .select('id, issued_at, user_id, course_id, user:users(id,name,email,role), course:courses(id,title)')
+      .order('issued_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('users')
+      .select('id, created_at, name, email, role')
+      .order('created_at', { ascending: false })
+      .limit(50),
+  ]);
+  const events = [
+    ...(completions ?? []).map((c: any) => ({
+      id: `cp-${c.id}`,
+      action: 'COMPLETE_LESSON',
+      created_at: c.completed_at,
+      user: c.user,
+      entity_type: 'course',
+      entity_id: c.course_id,
+      meta: c.course?.title,
+      ip_address: null,
+    })),
+    ...(certs ?? []).map((c: any) => ({
+      id: `cert-${c.id}`,
+      action: 'ISSUE_CERTIFICATE',
+      created_at: c.issued_at,
+      user: c.user,
+      entity_type: 'certificate',
+      entity_id: c.course_id,
+      meta: c.course?.title,
+      ip_address: null,
+    })),
+    ...(newUsers ?? []).map((u: any) => ({
+      id: `user-${u.id}`,
+      action: 'CREATE_USER',
+      created_at: u.created_at,
+      user: { id: u.id, name: u.name, email: u.email, role: u.role },
+      entity_type: 'user',
+      entity_id: u.id,
+      meta: u.name,
+      ip_address: null,
+    })),
+  ]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 200);
+  return { data: events, error: null };
+};
 
 // ─── COURSE MODULES & LESSONS ────────────────────────────
 export const getCourseModules = (courseId: string) =>

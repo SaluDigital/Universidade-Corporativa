@@ -1,40 +1,21 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, Download, TrendingUp, TrendingDown, Users, Award, AlertTriangle, Clock } from 'lucide-react';
+import { BarChart3, Download, TrendingUp, Users, Award, AlertTriangle, Clock, Loader2 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  LineChart, Line, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis
+  LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis
 } from 'recharts';
 import { Button } from '../../components/ui/Button';
 import { StatCard } from '../../components/ui/Card';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { Avatar } from '../../components/ui/Avatar';
-import { StatusBadge } from '../../components/ui/Badge';
-import { completionByDepartment, monthlyProgress, topCourses, mockUsers, mockUserTracks } from '../../data/mock';
+import { getCourses, getCertificates, getOverdueTracks, getUsers } from '../../lib/api';
+import { supabase } from '../../lib/supabase';
+import { formatDate } from '../../lib/utils';
 import toast from 'react-hot-toast';
 
-const managerData = [
-  { name: 'Carlos M.', team: 5, completion: 68, overdue: 1 },
-  { name: 'Maria S.', team: 4, completion: 85, overdue: 0 },
-  { name: 'João P.', team: 6, completion: 52, overdue: 2 },
-  { name: 'Ana C.', team: 3, completion: 100, overdue: 0 },
-];
-
-const abandonedCourses = [
-  { name: 'Tráfego Pago Avançado', rate: 52, started: 25, dropped: 13 },
-  { name: 'Gestão por Indicadores', rate: 35, started: 20, dropped: 7 },
-  { name: 'CRM e Funil', rate: 28, started: 43, dropped: 12 },
-];
-
-const radarData = [
-  { subject: 'Onboarding', A: 94, fullMark: 100 },
-  { subject: 'Comercial', A: 68, fullMark: 100 },
-  { subject: 'CS', A: 82, fullMark: 100 },
-  { subject: 'Gestão', A: 55, fullMark: 100 },
-  { subject: 'Marketing', A: 91, fullMark: 100 },
-  { subject: 'Cultura', A: 88, fullMark: 100 },
-];
-
 const COLORS = ['#6B35B0', '#4BC8C8', '#10b981', '#f59e0b', '#9B6FD4'];
+const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -51,8 +32,111 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function ReportsPage() {
-  const overdueUsers = mockUserTracks.filter(t => t.status === 'overdue');
-  const pendingUsers = mockUserTracks.filter(t => t.status === 'not_started');
+  const [loading, setLoading] = useState(true);
+  const [allProgress, setAllProgress] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [overdueTracks, setOverdueTracks] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [
+        { data: progress },
+        { data: certs },
+        { data: overdue },
+        { data: usersData },
+      ] = await Promise.all([
+        supabase
+          .from('user_course_progress')
+          .select('id, user_id, course_id, status, progress_percent, completed_at, course:courses(id,title,category)'),
+        getCertificates(),
+        getOverdueTracks(),
+        getUsers(),
+      ]);
+      setAllProgress(progress ?? []);
+      setCertificates(certs ?? []);
+      setOverdueTracks(overdue ?? []);
+      setUsers(usersData ?? []);
+      setLoading(false);
+    })();
+  }, []);
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 size={28} className="animate-spin text-[#6B35B0]" />
+    </div>
+  );
+
+  const completed = allProgress.filter(p => p.status === 'completed');
+  const inProgress = allProgress.filter(p => p.status === 'in_progress');
+  const completionRate = allProgress.length > 0 ? Math.round((completed.length / allProgress.length) * 100) : 0;
+
+  const now = new Date();
+  const certsThisMonth = certificates.filter(c => {
+    const d = new Date(c.issued_at);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+
+  // Monthly data (last 6 months)
+  const monthlyData = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    return { month: MONTH_NAMES[d.getMonth()], year: d.getFullYear(), mo: d.getMonth(), completions: 0, certificates: 0 };
+  });
+  completed.forEach(p => {
+    if (!p.completed_at) return;
+    const d = new Date(p.completed_at);
+    const idx = monthlyData.findIndex(m => m.year === d.getFullYear() && m.mo === d.getMonth());
+    if (idx >= 0) monthlyData[idx].completions++;
+  });
+  certificates.forEach(c => {
+    const d = new Date(c.issued_at);
+    const idx = monthlyData.findIndex(m => m.year === d.getFullYear() && m.mo === d.getMonth());
+    if (idx >= 0) monthlyData[idx].certificates++;
+  });
+
+  // Department completion (client-side)
+  const deptMap: Record<string, { name: string; total: Set<string>; completedSet: Set<string> }> = {};
+  users.forEach((u: any) => {
+    if (!u.department_id) return;
+    const dname = u.department?.name ?? 'Sem departamento';
+    if (!deptMap[u.department_id]) deptMap[u.department_id] = { name: dname, total: new Set(), completedSet: new Set() };
+    deptMap[u.department_id].total.add(u.id);
+  });
+  const userDeptLookup: Record<string, string> = {};
+  users.forEach((u: any) => { if (u.department_id) userDeptLookup[u.id] = u.department_id; });
+  completed.forEach(p => {
+    const deptId = userDeptLookup[p.user_id];
+    if (deptId && deptMap[deptId]) deptMap[deptId].completedSet.add(p.user_id);
+  });
+  const deptData = Object.values(deptMap)
+    .filter(d => d.total.size > 0)
+    .map(d => ({ name: d.name, rate: Math.round((d.completedSet.size / d.total.size) * 100), completed: d.completedSet.size, total: d.total.size }))
+    .sort((a, b) => b.rate - a.rate);
+
+  // Radar by category
+  const catMap: Record<string, { total: number; done: number }> = {};
+  allProgress.forEach(p => {
+    const cat = (p.course as any)?.category ?? 'Outros';
+    if (!catMap[cat]) catMap[cat] = { total: 0, done: 0 };
+    catMap[cat].total++;
+    if (p.status === 'completed') catMap[cat].done++;
+  });
+  const radarData = Object.entries(catMap).map(([subject, v]) => ({
+    subject,
+    A: v.total > 0 ? Math.round((v.done / v.total) * 100) : 0,
+    fullMark: 100,
+  }));
+
+  // Top courses by completion count
+  const courseCompMap: Record<string, { name: string; completions: number }> = {};
+  completed.forEach(p => {
+    if (!p.course_id) return;
+    if (!courseCompMap[p.course_id]) courseCompMap[p.course_id] = { name: (p.course as any)?.title ?? 'Sem título', completions: 0 };
+    courseCompMap[p.course_id].completions++;
+  });
+  const topCourses = Object.values(courseCompMap).sort((a, b) => b.completions - a.completions).slice(0, 5);
+  const maxComp = topCourses[0]?.completions || 1;
+  const topCoursesData = topCourses.map(c => ({ ...c, rate: Math.round((c.completions / maxComp) * 100) }));
 
   return (
     <div className="max-w-screen-xl space-y-6">
@@ -68,19 +152,19 @@ export function ReportsPage() {
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Taxa de conclusão geral" value="74%" subtitle="Última atualização hoje" icon={<TrendingUp />} color="emerald" trend={{ value: 6, label: 'vs mês anterior' }} />
-        <StatCard title="Trilhas vencidas" value={overdueUsers.length.toString()} subtitle="Requerem atenção" icon={<AlertTriangle />} color="red" />
-        <StatCard title="Pendentes" value={pendingUsers.length.toString()} subtitle="Não iniciadas" icon={<Clock />} color="amber" />
-        <StatCard title="Certificados no mês" value="35" subtitle="Abril 2024" icon={<Award />} color="purple" trend={{ value: 23, label: 'vs março' }} />
+        <StatCard title="Taxa de conclusão geral" value={`${completionRate}%`} subtitle="Cursos com progresso" icon={<TrendingUp />} color="emerald" />
+        <StatCard title="Trilhas vencidas" value={String(overdueTracks.length)} subtitle="Requerem atenção" icon={<AlertTriangle />} color="red" />
+        <StatCard title="Em andamento" value={String(inProgress.length)} subtitle="Cursos em progresso" icon={<Clock />} color="amber" />
+        <StatCard title="Certificados no mês" value={String(certsThisMonth.length)} subtitle={`${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`} icon={<Award />} color="purple" />
       </div>
 
       {/* Charts row 1 */}
       <div className="grid lg:grid-cols-3 gap-6">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="lg:col-span-2 glass-card rounded-2xl p-6">
-          <h3 className="font-semibold text-white mb-1">Evolução de Certificados</h3>
-          <p className="text-slate-500 text-sm mb-4">Certificados emitidos mês a mês</p>
+          <h3 className="font-semibold text-white mb-1">Evolução de Conclusões</h3>
+          <p className="text-slate-500 text-sm mb-4">Cursos concluídos e certificados emitidos por mês</p>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={monthlyProgress}>
+            <LineChart data={monthlyData}>
               <XAxis dataKey="month" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
@@ -92,14 +176,18 @@ export function ReportsPage() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.1 } }} className="glass-card rounded-2xl p-6">
           <h3 className="font-semibold text-white mb-1">Radar por Categoria</h3>
-          <p className="text-slate-500 text-sm mb-4">Cobertura de treinamento</p>
-          <ResponsiveContainer width="100%" height={220}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="rgba(255,255,255,0.05)" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 11 }} />
-              <Radar dataKey="A" stroke="#6B35B0" fill="#6B35B0" fillOpacity={0.2} strokeWidth={2} />
-            </RadarChart>
-          </ResponsiveContainer>
+          <p className="text-slate-500 text-sm mb-4">Taxa de conclusão por área</p>
+          {radarData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 11 }} />
+                <Radar dataKey="A" stroke="#6B35B0" fill="#6B35B0" fillOpacity={0.2} strokeWidth={2} />
+              </RadarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-slate-600 text-sm">Sem dados</div>
+          )}
         </motion.div>
       </div>
 
@@ -107,89 +195,105 @@ export function ReportsPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.15 } }} className="glass-card rounded-2xl p-6">
           <h3 className="font-semibold text-white mb-1">Taxa por Departamento</h3>
-          <p className="text-slate-500 text-sm mb-4">Conclusão de trilhas obrigatórias</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={completionByDepartment} barSize={28}>
-              <XAxis dataKey="name" tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="rate" name="% Conclusão" radius={[6, 6, 0, 0]}>
-                {completionByDepartment.map((_, idx) => (
-                  <Cell key={idx} fill={COLORS[idx % COLORS.length]} opacity={0.85} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <p className="text-slate-500 text-sm mb-4">Colaboradores com ao menos 1 curso concluído</p>
+          {deptData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={deptData} barSize={28}>
+                <XAxis dataKey="name" tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#475569', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="rate" name="% Conclusão" radius={[6, 6, 0, 0]}>
+                  {deptData.map((_, idx) => (
+                    <Cell key={idx} fill={COLORS[idx % COLORS.length]} opacity={0.85} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-slate-600 text-sm">Nenhum departamento com dados</div>
+          )}
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.2 } }} className="glass-card rounded-2xl p-6">
-          <h3 className="font-semibold text-white mb-1">Desempenho por Gestor</h3>
-          <p className="text-slate-500 text-sm mb-4">Taxa de conclusão da equipe</p>
-          <div className="space-y-4">
-            {managerData.map((mgr, i) => (
-              <div key={mgr.name} className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-400 w-24">{mgr.name}</span>
-                  <ProgressBar value={mgr.completion} size="sm" className="flex-1" />
-                  <span className="text-sm font-semibold text-white w-10 text-right">{mgr.completion}%</span>
-                  {mgr.overdue > 0 && (
-                    <span className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">{mgr.overdue} atrasado</span>
-                  )}
+          <h3 className="font-semibold text-white mb-1">Cursos mais concluídos</h3>
+          <p className="text-slate-500 text-sm mb-4">Top 5 por número de conclusões</p>
+          {topCoursesData.length > 0 ? (
+            <div className="space-y-4">
+              {topCoursesData.map((course, i) => (
+                <div key={course.name} className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-600 w-5">{i + 1}</span>
+                    <span className="text-sm text-slate-400 flex-1 truncate">{course.name}</span>
+                    <span className="text-sm font-semibold text-white w-16 text-right">{course.completions} concl.</span>
+                  </div>
+                  <ProgressBar value={course.rate} size="xs" className="ml-7" />
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-slate-600 text-sm">Nenhuma conclusão registrada</div>
+          )}
         </motion.div>
       </div>
 
-      {/* Bottom tables */}
+      {/* Bottom: overdue users */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Abandonment */}
-        <div className="glass-card rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingDown size={16} className="text-red-400" />
-            <h3 className="font-semibold text-white">Cursos com Maior Abandono</h3>
-          </div>
-          <div className="space-y-3">
-            {abandonedCourses.map(c => (
-              <div key={c.name} className="flex items-center gap-4 p-3 rounded-xl bg-red-500/5 border border-red-500/10">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">{c.name}</p>
-                  <ProgressBar value={100 - c.rate} color="red" size="xs" className="mt-1.5" />
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-red-400">{c.rate}% abandono</p>
-                  <p className="text-xs text-slate-600">{c.dropped}/{c.started} desistiram</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Overdue users */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle size={16} className="text-amber-400" />
             <h3 className="font-semibold text-white">Colaboradores com Atraso</h3>
-            <span className="ml-auto text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">{overdueUsers.length}</span>
+            <span className="ml-auto text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">{overdueTracks.length}</span>
           </div>
-          <div className="space-y-2">
-            {overdueUsers.map(ut => {
-              const user = mockUsers.find(u => u.id === ut.user_id);
-              return (
-                <div key={ut.id} className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                  <Avatar name={user?.name ?? 'U'} size="sm" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-white">{user?.name}</p>
-                    <p className="text-xs text-slate-500">Trilha Comercial</p>
+          {overdueTracks.length === 0 ? (
+            <div className="py-8 text-center text-slate-600 text-sm">Nenhum atraso registrado</div>
+          ) : (
+            <div className="space-y-2">
+              {overdueTracks.map((track: any) => (
+                <div key={track.id} className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                  <Avatar name={track.user_name ?? 'U'} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{track.user_name}</p>
+                    <p className="text-xs text-slate-500 truncate">{track.track_title}</p>
                   </div>
-                  <div className="text-right">
-                    <StatusBadge status="overdue" />
-                    <p className="text-xs text-slate-600 mt-0.5">{ut.progress_percent}% concl.</p>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xs font-semibold text-red-400">Atrasado</p>
+                    <p className="text-xs text-slate-600">{track.progress_percent ?? 0}% concl.</p>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="glass-card rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 size={16} className="text-[#9B6FD4]" />
+            <h3 className="font-semibold text-white">Resumo Geral</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/5">
+              <span className="text-sm text-slate-400">Total de colaboradores</span>
+              <span className="text-sm font-bold text-white">{users.length}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/5">
+              <span className="text-sm text-slate-400">Cursos iniciados</span>
+              <span className="text-sm font-bold text-white">{allProgress.length}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/5">
+              <span className="text-sm text-slate-400">Cursos concluídos</span>
+              <span className="text-sm font-bold text-emerald-400">{completed.length}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/3 border border-white/5">
+              <span className="text-sm text-slate-400">Certificados emitidos</span>
+              <span className="text-sm font-bold text-amber-400">{certificates.length}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-[#6B35B0]/10 border border-[#6B35B0]/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-slate-400">Taxa de conclusão</span>
+                <span className="text-sm font-bold text-[#9B6FD4]">{completionRate}%</span>
+              </div>
+              <ProgressBar value={completionRate} size="sm" />
+            </div>
           </div>
         </div>
       </div>
