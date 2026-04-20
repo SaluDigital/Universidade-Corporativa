@@ -46,9 +46,11 @@ export function HistoryPage() {
       color: 'emerald',
     })),
     ...courseProgress.filter(cp => cp.status === 'in_progress').map(cp => ({
-      date: cp.started_at ?? '',
-      title: `Iniciou "${cp.course?.title}"`,
-      subtitle: `${cp.progress_percent ?? 0}% concluído`,
+      date: cp.last_access_at ?? cp.started_at ?? '',
+      title: (cp.progress_percent ?? 0) >= 100
+        ? `Aguardando aprovação — "${cp.course?.title}"`
+        : `Em andamento — "${cp.course?.title}"`,
+      subtitle: `${cp.progress_percent ?? 0}% das aulas concluídas${cp.grade != null ? ` · Última nota: ${cp.grade}%` : ''}`,
       icon: <PlayCircle size={14} />,
       color: 'blue',
     })),
