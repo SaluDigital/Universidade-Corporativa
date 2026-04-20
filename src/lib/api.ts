@@ -98,6 +98,20 @@ export const updateCourse = (id: string, data: Record<string, unknown>) =>
 export const toggleCourseActive = (id: string, is_active: boolean) =>
   supabase.from('courses').update({ is_active }).eq('id', id);
 
+export const deleteCourse = (id: string) =>
+  supabase.from('courses').delete().eq('id', id);
+
+export const uploadCourseThumbnail = async (file: File): Promise<string> => {
+  const ext = file.name.split('.').pop() ?? 'jpg';
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('course-thumbnails')
+    .upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from('course-thumbnails').getPublicUrl(path);
+  return data.publicUrl;
+};
+
 // ─── TRACKS ───────────────────────────────────────────────
 export const getTracks = () =>
   supabase

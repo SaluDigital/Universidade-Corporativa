@@ -300,25 +300,52 @@ export function CourseDetailPage() {
   return (
     <div className="max-w-3xl space-y-5">
       {/* Header */}
-      <div className="flex items-start gap-3">
-        <button
-          onClick={() => navigate('/employee/courses')}
-          className="mt-1 p-2 rounded-xl glass border border-white/5 text-slate-500 hover:text-white transition-all flex-shrink-0"
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            {course.category && <Badge variant={(categoryColors[course.category] ?? 'slate') as any}>{course.category}</Badge>}
-            {isCompleted && <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium"><CheckCircle size={12} /> Concluído</span>}
+      <div className="glass-card rounded-2xl overflow-hidden">
+        {course.thumbnail_url ? (
+          <div className="relative h-48 w-full">
+            <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <button
+              onClick={() => navigate('/employee/courses')}
+              className="absolute top-3 left-3 p-2 rounded-xl bg-black/40 backdrop-blur-sm text-white/70 hover:text-white transition-all"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <div className="absolute bottom-0 left-0 right-0 p-4">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                {course.category && <Badge variant={(categoryColors[course.category] ?? 'slate') as any}>{course.category}</Badge>}
+                {isCompleted && <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium"><CheckCircle size={12} /> Concluído</span>}
+              </div>
+              <h2 className="text-xl font-bold text-white leading-snug">{course.title}</h2>
+              <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-400">
+                <span className="flex items-center gap-1"><Clock size={10} />{course.workload_hours}h</span>
+                <span className="flex items-center gap-1"><BookOpen size={10} />{totalLessons} aulas</span>
+                {course.has_certificate && <span className="flex items-center gap-1 text-amber-400"><Award size={10} />Certifica</span>}
+              </div>
+            </div>
           </div>
-          <h2 className="text-xl font-bold text-white leading-snug">{course.title}</h2>
-          <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-500">
-            <span className="flex items-center gap-1"><Clock size={10} />{course.workload_hours}h</span>
-            <span className="flex items-center gap-1"><BookOpen size={10} />{totalLessons} aulas</span>
-            {course.has_certificate && <span className="flex items-center gap-1 text-amber-400"><Award size={10} />Certifica</span>}
+        ) : (
+          <div className="flex items-start gap-3 p-4">
+            <button
+              onClick={() => navigate('/employee/courses')}
+              className="mt-1 p-2 rounded-xl glass border border-white/5 text-slate-500 hover:text-white transition-all flex-shrink-0"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                {course.category && <Badge variant={(categoryColors[course.category] ?? 'slate') as any}>{course.category}</Badge>}
+                {isCompleted && <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium"><CheckCircle size={12} /> Concluído</span>}
+              </div>
+              <h2 className="text-xl font-bold text-white leading-snug">{course.title}</h2>
+              <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-500">
+                <span className="flex items-center gap-1"><Clock size={10} />{course.workload_hours}h</span>
+                <span className="flex items-center gap-1"><BookOpen size={10} />{totalLessons} aulas</span>
+                {course.has_certificate && <span className="flex items-center gap-1 text-amber-400"><Award size={10} />Certifica</span>}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">
