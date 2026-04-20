@@ -128,6 +128,12 @@ export const updateTrack = (id: string, data: Record<string, unknown>) =>
 export const getTrackEnrollments = (trackId: string) =>
   supabase.from('user_tracks').select('*').eq('track_id', trackId);
 
+export const addCourseToTrack = (trackId: string, courseId: string, sortOrder: number) =>
+  supabase.from('track_courses').insert({ track_id: trackId, course_id: courseId, sort_order: sortOrder }).select().single();
+
+export const removeCourseFromTrack = (trackId: string, courseId: string) =>
+  supabase.from('track_courses').delete().eq('track_id', trackId).eq('course_id', courseId);
+
 // ─── TRACK RULES ──────────────────────────────────────────
 export const getRules = () =>
   supabase.from('track_rules').select('*, track:tracks(id,title,is_mandatory,is_blocking,deadline_days), department:departments(id,name), position:positions(id,name)');
