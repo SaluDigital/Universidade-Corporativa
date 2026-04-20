@@ -396,10 +396,12 @@ export function CourseDetailPage() {
                         allowFullScreen
                         className="absolute inset-0 w-full h-full"
                       />
-                      {/* Bloqueia título clicável no topo (aparece ao pausar) */}
-                      <div className="absolute top-0 left-0 right-0 h-12 z-10" style={{ pointerEvents: 'all' }} />
-                      {/* Bloqueia "Assistir no YouTube" no canto inferior direito */}
-                      <div className="absolute bottom-0 right-0 w-56 h-12 z-10" style={{ pointerEvents: 'all' }} />
+                      {/* Bloqueia título + canal clicáveis no topo */}
+                      <div className="absolute top-0 left-0 right-0 h-16 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
+                      {/* Bloqueia ícone de copiar link (canto inferior esquerdo) */}
+                      <div className="absolute bottom-0 left-0 w-14 h-14 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
+                      {/* Bloqueia "Assistir no YouTube" (canto inferior direito) */}
+                      <div className="absolute bottom-0 right-0 w-64 h-14 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
                     </div>
                   ) : (
                     <div className="aspect-video bg-slate-900 flex items-center justify-center">
