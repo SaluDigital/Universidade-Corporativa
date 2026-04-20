@@ -396,8 +396,10 @@ export function CourseDetailPage() {
                         allowFullScreen
                         className="absolute inset-0 w-full h-full"
                       />
-                      {/* Bloqueia o botão "Assistir no YouTube" no canto inferior direito */}
-                      <div className="absolute bottom-0 right-0 w-48 h-10 z-10" style={{ pointerEvents: 'all' }} />
+                      {/* Bloqueia título clicável no topo (aparece ao pausar) */}
+                      <div className="absolute top-0 left-0 right-0 h-12 z-10" style={{ pointerEvents: 'all' }} />
+                      {/* Bloqueia "Assistir no YouTube" no canto inferior direito */}
+                      <div className="absolute bottom-0 right-0 w-56 h-12 z-10" style={{ pointerEvents: 'all' }} />
                     </div>
                   ) : (
                     <div className="aspect-video bg-slate-900 flex items-center justify-center">

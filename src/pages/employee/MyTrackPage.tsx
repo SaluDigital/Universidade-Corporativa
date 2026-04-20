@@ -82,7 +82,16 @@ export function MyTrackPage() {
                         )}
                       </div>
                     </div>
-                    <CircularProgress value={ut.progress_percent} size={70} color={isCompleted ? '#10b981' : isOverdue ? '#ef4444' : '#6B35B0'} />
+                    <CircularProgress
+                      value={courses.length === 0 ? 0 : Math.round(
+                        courses.reduce((sum: number, tc: any) => {
+                          const cp = courseProgress.find((p: any) => p.course_id === tc.course?.id);
+                          return sum + (cp?.progress_percent ?? 0);
+                        }, 0) / courses.length
+                      )}
+                      size={70}
+                      color={isCompleted ? '#10b981' : isOverdue ? '#ef4444' : '#6B35B0'}
+                    />
                   </div>
                 </div>
 
@@ -98,7 +107,7 @@ export function MyTrackPage() {
                         const courseStatus = cp?.status ?? 'not_started';
 
                         return (
-                          <motion.div key={tc.id} whileHover={{ x: 4 }} onClick={() => navigate('/employee/lesson')}
+                          <motion.div key={tc.id} whileHover={{ x: 4 }} onClick={() => navigate(`/employee/courses/${course?.id}`)}
                             className={`flex items-center gap-4 p-3.5 rounded-xl border cursor-pointer transition-all group
                               ${courseStatus === 'completed' ? 'bg-emerald-500/5 border-emerald-500/15 hover:border-emerald-500/30' :
                                 courseStatus === 'in_progress' ? 'bg-[#6B35B0]/5 border-[#6B35B0]/15 hover:border-[#6B35B0]/30' :
