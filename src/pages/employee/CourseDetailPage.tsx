@@ -390,18 +390,17 @@ export function CourseDetailPage() {
                   {selectedLesson.content_url && extractYouTubeId(selectedLesson.content_url) ? (
                     <div className="relative w-full aspect-video bg-black">
                       <iframe
-                        src={`https://www.youtube-nocookie.com/embed/${extractYouTubeId(selectedLesson.content_url)}?rel=0&modestbranding=1&iv_load_policy=3&disablekb=0`}
+                        src={`https://www.youtube-nocookie.com/embed/${extractYouTubeId(selectedLesson.content_url)}?rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=0`}
                         title={selectedLesson.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
                         className="absolute inset-0 w-full h-full"
                       />
                       {/* Bloqueia título + canal clicáveis no topo */}
                       <div className="absolute top-0 left-0 right-0 h-16 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
                       {/* Bloqueia ícone de copiar link (canto inferior esquerdo) */}
-                      <div className="absolute bottom-0 left-0 w-14 h-14 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
-                      {/* Bloqueia "Assistir no YouTube" (canto inferior direito) */}
-                      <div className="absolute bottom-0 right-0 w-64 h-14 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
+                      <div className="absolute bottom-0 left-0 w-20 h-16 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
+                      {/* Bloqueia "Assistir no YouTube" + logo (canto inferior direito) */}
+                      <div className="absolute bottom-0 right-0 w-64 h-16 z-10" style={{ pointerEvents: 'all', background: 'transparent' }} />
                     </div>
                   ) : (
                     <div className="aspect-video bg-slate-900 flex items-center justify-center">
