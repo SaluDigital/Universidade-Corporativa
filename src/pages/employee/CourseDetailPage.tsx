@@ -390,12 +390,14 @@ export function CourseDetailPage() {
                   {selectedLesson.content_url && extractYouTubeId(selectedLesson.content_url) ? (
                     <div className="relative w-full aspect-video bg-black">
                       <iframe
-                        src={`https://www.youtube.com/embed/${extractYouTubeId(selectedLesson.content_url)}?rel=0&modestbranding=1`}
+                        src={`https://www.youtube-nocookie.com/embed/${extractYouTubeId(selectedLesson.content_url)}?rel=0&modestbranding=1&iv_load_policy=3&disablekb=0`}
                         title={selectedLesson.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
                         className="absolute inset-0 w-full h-full"
                       />
+                      {/* Bloqueia o botão "Assistir no YouTube" no canto inferior direito */}
+                      <div className="absolute bottom-0 right-0 w-48 h-10 z-10" style={{ pointerEvents: 'all' }} />
                     </div>
                   ) : (
                     <div className="aspect-video bg-slate-900 flex items-center justify-center">
